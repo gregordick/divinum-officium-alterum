@@ -5,10 +5,10 @@ python:
   - "3.7"
 script:
   - pylint officium
-  - pip install -U sphinx && make -C doc
+  - pip install -U sphinx && make -C doc html
 deploy:
   provider: pages
-  local-dir: doc
+  local-dir: doc/_build/html
   skip-cleanup: true
   github-token: $GITHUB_TOKEN
   keep-history: true
