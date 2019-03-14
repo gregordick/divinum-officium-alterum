@@ -5,3 +5,13 @@ python:
   - "3.7"
 script:
   - pylint officium
+  - pip install -U sphinx && make -C doc
+deploy:
+  provider: pages
+  local-dir: doc
+  skip-cleanup: true
+  github-token: $GITHUB_TOKEN
+  keep-history: true
+  on:
+    branch: master
+    python: "3.7"
