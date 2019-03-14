@@ -5,7 +5,7 @@ python:
   - "3.7"
 script:
   - pylint officium
-  - pip install -U sphinx && make -C doc html
+  - pip install -U sphinx sphinx_rtd_theme && make -C doc html
 deploy:
   provider: pages
   local-dir: doc/_build/html
