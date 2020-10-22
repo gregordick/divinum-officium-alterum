@@ -1,0 +1,822 @@
+calendarium/01-01:
+- titulus: in-circumcisione-domini
+calendarium/01-02:
+- titulus: die-secunda-januarii
+calendarium/01-03:
+- titulus: die-tertia-januarii
+calendarium/01-04:
+- titulus: die-quarta-januarii
+calendarium/01-05:
+- classis: 2
+  titulus: in-vigilia-epiphaniae
+calendarium/01-06:
+- classis: 1
+  titulus: in-epiphania-domini
+calendarium/01-07:
+- titulus: die-septima-januarii
+calendarium/01-08:
+- titulus: die-octava-januarii
+calendarium/01-09:
+- titulus: die-nona-januarii
+calendarium/01-10:
+- titulus: die-decima-januarii
+calendarium/01-11:
+- titulus: sexta-die-infra-octavam-epiphaniae
+calendarium/01-12:
+- titulus: die-duodecima-januarii
+calendarium/01-13:
+- titulus: in-octava-epiphaniae
+calendarium/01-14:
+- titulus: s--hilarii-episcopi-confessoris-ecclesiae-doctoris
+calendarium/01-15:
+- titulus: s--pauli-primi-eremitae-et-confessoris
+calendarium/01-16:
+- titulus: s--marcelli-papae-et-martyris
+calendarium/01-17:
+- titulus: s--antonii-abbatis
+calendarium/01-18:
+- titulus: cathedrae-s--petri
+calendarium/01-19:
+- titulus: ss--marii--marthae--audifacis--et-abachum-martyrum
+calendarium/01-20:
+- titulus: ss--fabiani-et-sebastiani-martyrum
+calendarium/01-21:
+- titulus: s--agnetis-virginis-et-martyris
+calendarium/01-22:
+- titulus: ss--vincentii-et-anastasii-martyrum
+calendarium/01-23:
+- titulus: s--raymundi-de-penafort-confessoris
+calendarium/01-24:
+- titulus: s--timothei-episcopi-et-martyris
+calendarium/01-25:
+- titulus: in-conversione-s--pauli-apostoli
+calendarium/01-26:
+- titulus: s--polycarpi-episcopi-et-martyris
+calendarium/01-27:
+- titulus: s--joannis-chrysostomi-episcopi-confessoris-ecclesiae-doctoris
+calendarium/01-28:
+- titulus: s--petri-nolasci-confessoris
+calendarium/01-29:
+- titulus: s--francisci-salesii-episcopi-confessoris-ecclesiae-doctoris
+calendarium/01-30:
+- titulus: s--martinae-virginis-et-martyris
+calendarium/01-31:
+- titulus: s--joannis-bosco-confessoris
+calendarium/02-01:
+- titulus: s--ignatii-episcopi-et-martyris
+calendarium/02-02:
+- classis: 2
+  titulus: in-purificatione-beatae-mariae-virginis
+calendarium/02-03:
+- titulus: s--blasii-episcopi
+calendarium/02-04:
+- titulus: s--andreae-corsini-episcopi-et-confessoris
+calendarium/02-05:
+- titulus: s--agathae-virginis-et-martyris
+calendarium/02-06:
+- titulus: s--titi-episcopi-et-confessoris
+calendarium/02-07:
+- titulus: s--romualdi-abbatis
+calendarium/02-08:
+- titulus: s--joannis-de-matha-confessoris
+calendarium/02-09:
+- titulus: s--cyrilli-episc--alexandrini-confessoris-ecclesiae-doctoris
+calendarium/02-10:
+- titulus: s--scholasticae-virginis
+calendarium/02-11:
+- titulus: in-apparitione-beatae-mariae-virginis-immaculatae
+calendarium/02-12:
+- titulus: ss--septem-fundatorum-ordinis-servorum-b--m--v-
+calendarium/02-14:
+- titulus: s--valentini-martyris
+calendarium/02-15:
+- titulus: ss--faustini-et-jovitae
+calendarium/02-18:
+- titulus: s--simeonis-faustini-episcopi-et-martyris
+calendarium/02-22:
+- titulus: in-cathedra-s--petri-apostoli-antiochiae
+calendarium/02-23:
+- titulus: s--petri-damiani-confessoris
+calendarium/02-24:
+- classis: 2
+  titulus: s--matthiae-apostoli
+calendarium/02-27:
+- titulus: s--gabrielis-a-virgine-perdolente-confessoris
+calendarium/03-04:
+- titulus: s--casimiri-confessoris
+calendarium/03-06:
+- titulus: ss--perpetuae-et-felicitatis-martyrum
+calendarium/03-07:
+- titulus: s--thomae-de-aquino-confessoris-ecclesiae-doctoris
+calendarium/03-08:
+- titulus: s--joannis-de-deo-confessoris
+calendarium/03-09:
+- titulus: s--franciscae-romanae-viduae
+calendarium/03-10:
+- titulus: ss--quadraginta-martyrum
+calendarium/03-12:
+- titulus: s--gregorii-papae-confessoris-et-eccl--doct-
+calendarium/03-17:
+- titulus: s--patricii-episcopi-et-conf-
+calendarium/03-18:
+- titulus: "s--cyrilli-episcopi-hierosolymitani-et-ecclesi\xE6-doctoris"
+calendarium/03-19:
+- classis: 1
+  titulus: s--joseph-sponsi-b-m-v--confessoris
+calendarium/03-21:
+- titulus: s--benedicti-abbatis
+calendarium/03-24:
+- titulus: s--gabrielis-archangeli
+calendarium/03-25:
+- classis: 1
+  titulus: "in-annuntiatione-beat\xE6-mari\xE6-virginis"
+calendarium/03-27:
+- titulus: s--joannis-damasceni-confessoris
+calendarium/03-28:
+- titulus: s--joannis-a-capistrano-confessoris
+calendarium/04-02:
+- titulus: s--francisci-de-paula-confessoris
+calendarium/04-04:
+- titulus: s--isidori-episc--confessoris-et-ecclesiae-doctoris
+calendarium/04-05:
+- titulus: s--vincentii-ferrerii-confessoris
+calendarium/04-11:
+- titulus: s--leonis-i--papae-confessoris-et-ecclesiae-doctoris
+calendarium/04-13:
+- titulus: s--hermenegildi-martyris
+calendarium/04-14:
+- titulus: s--justini-martyris
+calendarium/04-17:
+- titulus: s--aniceti-papae-et-martyris
+calendarium/04-21:
+- titulus: s--anselmi-episcopi-confessoris-et-ecclesiae-doctoris
+calendarium/04-22:
+- titulus: ss--soteris-et-caji-paparum-et-martyrum
+calendarium/04-23:
+- titulus: s--georgii-martyris
+calendarium/04-24:
+- titulus: s--fidelis-de-sigmaringa-martyris
+calendarium/04-25:
+- classis: 2
+  titulus: s--marci-evangelistae
+calendarium/04-26:
+- titulus: ss--cleti-et-marcellini-paparum-et-martyrum
+calendarium/04-27:
+- titulus: s--petri-canisii-confessoris-et-ecclesiae-doctoris
+calendarium/04-28:
+- titulus: s--pauli-a-cruce-confessoris
+calendarium/04-29:
+- titulus: s--petri-martyris
+calendarium/04-30:
+- titulus: s--catharinae-senensis-virginis
+calendarium/05-01:
+- classis: 1
+  titulus: s--joseph-opificis
+calendarium/05-02:
+- titulus: s--athanasii-confessoris-ecclesiae-doctoris
+calendarium/05-03:
+- classis: 2
+  titulus: inventione-sanctae-crucis
+calendarium/05-04:
+- titulus: s--monicae-viduae
+calendarium/05-05:
+- titulus: s--pii-v-papae-confessoris
+calendarium/05-07:
+- titulus: s--stanislai-episcopi-et-martyris
+calendarium/05-09:
+- titulus: s--gregorii-nazianzeni-episcopi-confessoris-et-ecclesiae-doctoris
+calendarium/05-10:
+- titulus: s--antonini-episcopi-et-confessoris
+calendarium/05-11:
+- classis: 2
+  titulus: ss--philippi-et-jacobi-apostolorum
+calendarium/05-12:
+- titulus: ss--nerei--achillei-et-domitillae-virgini-atque-pancratii-martyrum
+calendarium/05-13:
+- titulus: s--roberti-bellarmino-episcopi-confessoris-et-ecclesiae-doctoris
+calendarium/05-14:
+- titulus: s--bonifacii-martyri
+calendarium/05-15:
+- titulus: s--joannis-baptistae-de-la-salle-confessoris
+calendarium/05-16:
+- titulus: s--ubaldi-episcopi-confessoris
+calendarium/05-17:
+- titulus: s--paschalis-baylon-confessoris
+calendarium/05-18:
+- titulus: s--venantii-martyris
+calendarium/05-19:
+- titulus: s--petri-celestini-papae-confessoris
+calendarium/05-20:
+- titulus: s--bernardini-senensis-confessoris
+calendarium/05-25:
+- titulus: s--gregorii-vii-papae-confessoris
+calendarium/05-26:
+- titulus: s--philippi-neri-confessoris
+calendarium/05-27:
+- titulus: s--bedae-venerabilis-confessoris-et-ecclesiae-doctoris
+calendarium/05-28:
+- titulus: s--augustini-episcopi-confessoris
+calendarium/05-29:
+- titulus: s--mariae-magdalenae-de-pazzis
+calendarium/05-30:
+- titulus: s--felicis-papae-et-martyris
+calendarium/05-31:
+- classis: 2
+  titulus: beatae-mariae-virginis-reginae
+calendarium/06-01:
+- titulus: s--angelae-mericiae-virginis
+calendarium/06-02:
+- titulus: ss--marcellini--petri--atque-erasmi-martyrum
+calendarium/06-04:
+- titulus: s--francisci-caracciolo-confessoris
+calendarium/06-05:
+- titulus: s--bonifacii-episcopi-et-martyris
+calendarium/06-06:
+- titulus: s--norberti-episc--et-confessoris
+calendarium/06-09:
+- titulus: ss--primi-et-feliciani-martyrum
+calendarium/06-10:
+- titulus: s--margaritae-reginae-viduae
+calendarium/06-11:
+- titulus: s--barnabae-apostoli
+calendarium/06-12:
+- titulus: s--joannis-a-s-facundo-confessoris
+calendarium/06-13:
+- titulus: s--antonii-de-padua-confessoris-et-ecclesiae-doctoris
+calendarium/06-14:
+- titulus: s--basilii-magni-confessoris-et-ecclesiae-doctoris
+calendarium/06-15:
+- titulus: ss--viti--modesti-atque-crescentiae-martyrum
+calendarium/06-17:
+- titulus: s--gregorii-barbadici-episcopi-confessoris
+calendarium/06-18:
+- titulus: s--ephraem-syri-confessoris-et-ecclesiae-doctoris
+calendarium/06-19:
+- titulus: s--julianae-de-falconeriis-virginis
+calendarium/06-20:
+- titulus: s--sylverii-papae-et-martyri
+calendarium/06-21:
+- titulus: s--aloisii-gonzagae-confessoris
+calendarium/06-22:
+- titulus: s--paulini-episcopi-et-confessoris
+calendarium/06-23:
+- titulus: in-vigilia-s--joannis-baptistae
+calendarium/06-24:
+- classis: 1
+  titulus: in-nativitate-s--joannis-baptistae
+calendarium/06-24-infra-oct:
+- titulus: die-infra-octavam-nativitatis-s--joannis-baptistae
+calendarium/06-25:
+- titulus: s--gulielmi-abbatis
+calendarium/06-26:
+- titulus: ss--joannis-et-pauli-martyrum
+calendarium/06-28:
+- titulus: -rubrica-divino-aut-rubrica-1955-aut-rubrica-innovata-dicuntur-
+calendarium/06-29:
+- classis: 1
+  titulus: ss--apostolorum-petri-et-pauli
+calendarium/06-29-infra-oct:
+- titulus: die-infra-octavam-ss--petri-et-pauli
+calendarium/06-30:
+- titulus: in-commemoratione-s--pauli-apostoli
+calendarium/07-01:
+- classis: 1
+  titulus: pretiosissimi-sanguinis-domini-nostri-jesu-christi
+calendarium/07-02:
+- classis: 2
+  titulus: in-visitatione-b--mariae-virginis
+calendarium/07-03:
+- titulus: s--irenaei-episcopi-et-martyris
+calendarium/07-05:
+- titulus: s--antonii-mariae-zacharia-confessoris
+calendarium/07-07:
+- titulus: ss--cyrilli-et-methodii-pont--et-conf-
+calendarium/07-08:
+- titulus: s--elisabeth-reg--portugaliae-viduae
+calendarium/07-10:
+- titulus: ss--septem-fratrum-martyrum--ac-rufinae-et-secundae-virginis-et-martyris
+calendarium/07-11:
+- titulus: s--pii-i--papae-et-martyris
+calendarium/07-12:
+- titulus: s--joannis-gualberti-abbatis
+calendarium/07-14:
+- titulus: s--bonaventurae-episcopi-confessoris-et-ecclesiae-doctoris
+calendarium/07-15:
+- titulus: s--henrici-imperatoris-confessoris
+calendarium/07-16:
+- titulus: in-commemoratione-beatae-mariae-virgine-de-monte-carmelo-
+calendarium/07-17:
+- titulus: s--alexii-confessoris
+calendarium/07-18:
+- titulus: s--camilli-de-lellis-confessoris
+calendarium/07-19:
+- titulus: s--vincentii-a-paulo-confessoris
+calendarium/07-20:
+- titulus: s--hieronymi-aemiliani-confessoris
+calendarium/07-21:
+- titulus: -rubrica-1960-dicuntur-
+calendarium/07-22:
+- titulus: s--mariae-magdalenae-poenitentis
+calendarium/07-23:
+- titulus: s--apollinaris-episcopi-et-martyris
+calendarium/07-24:
+- titulus: in-vigilia-s--jacobi-apostoli
+calendarium/07-25:
+- classis: 2
+  titulus: s--jacobi-apostoli
+calendarium/07-26:
+- classis: 2
+  titulus: s--annae-matris-b-m-v-
+calendarium/07-27:
+- titulus: s--pantaleonis-martyris
+calendarium/07-28:
+- titulus: ss--nazarii-et-celsi-martyrum
+calendarium/07-29:
+- titulus: s--marthae-virginis
+calendarium/07-30:
+- titulus: s--abdon-et-senen-martyrum
+calendarium/07-31:
+- titulus: s--ignatii-confessoris
+calendarium/08-01:
+- titulus: s--petri-ad-vincula
+calendarium/08-02:
+- titulus: s--alfonsi-mariae-de-ligorio-episc--conf--et-eccles--doct-
+calendarium/08-04:
+- titulus: s--dominici-confessoris
+calendarium/08-05:
+- titulus: s--mariae-virginis-ad-nives
+calendarium/08-06:
+- classis: 2
+  titulus: in-transfiguratione-domini-nostri-jesu-christi
+calendarium/08-07:
+- titulus: s--cajetani-confessoris
+calendarium/08-08:
+- titulus: -rubrica-1960-dicuntur-
+calendarium/08-09:
+- titulus: -rubrica-divino-aut-rubrica-1955-dicuntur-
+calendarium/08-10:
+- classis: 2
+  titulus: s--laurentii-martyris
+calendarium/08-11:
+- titulus: -rubrica-tridentina-dicuntur-
+calendarium/08-12:
+- titulus: s--clarae-virginis
+calendarium/08-13:
+- titulus: -rubrica-tridentina-dicuntur-
+calendarium/08-14:
+- titulus: -rubrica-tridentina-dicuntur-
+calendarium/08-15:
+- classis: 1
+  titulus: in-assumptione-beatae-mariae-virginis
+calendarium/08-15-common:
+- titulus: ''
+calendarium/08-15-infra-oct:
+- titulus: -rubrica-tridentina-aut-rubrica-divino-dicuntur-
+calendarium/08-16:
+- classis: 2
+  titulus: s--joachim-confessoris--patris-b--m--v-
+calendarium/08-17:
+- titulus: s--hyacinthi-confessoris
+calendarium/08-18:
+- titulus: -rubrica-tridentina-aut-rubrica-divino-dicuntur-
+calendarium/08-19:
+- titulus: s--joannis-eudes-confessoris
+calendarium/08-20:
+- titulus: s--bernardi-abbatis-et-ecclesiae-doctoris
+calendarium/08-21:
+- titulus: s--joannae-franciscae-fremiot-de-chantal-viduae
+calendarium/08-22:
+- classis: 2
+  titulus: immaculati-cordis-beatae-mariae-virginis
+calendarium/08-23:
+- titulus: s--philippi-benitii-confessoris
+calendarium/08-24:
+- classis: 2
+  titulus: s--bartholomaei-apostoli
+calendarium/08-25:
+- titulus: s--ludovici-confessoris
+calendarium/08-26:
+- titulus: s--zephirini-papae-et-martyris
+calendarium/08-27:
+- titulus: s--josephi-calasanctii-confessoris
+calendarium/08-28:
+- titulus: s--augustini-episcopi-et-confessoris-et-ecclesiae-doctoris
+calendarium/08-29:
+- titulus: in-decollatione-s--joannis-baptistae
+calendarium/08-30:
+- titulus: s--rosae-a-sancta-maria-limanae-virginis
+calendarium/08-31:
+- titulus: s--raymundi-nonnati-confessoris
+calendarium/09-01:
+- titulus: s--aegidii-abbatis
+calendarium/09-02:
+- titulus: s--stephani-hungariae-regis-confessoris
+calendarium/09-03:
+- titulus: s--pii-x-papae-confessoris
+calendarium/09-05:
+- titulus: s--laurentii-justiniani-episcopi-et-confessoris
+calendarium/09-08:
+- classis: 2
+  titulus: in-nativitate-beatae-mariae-virginis
+calendarium/09-09:
+- titulus: -rubrica-tridentina-dicuntur-
+calendarium/09-10:
+- titulus: -rubrica-tridentina-dicuntur-
+calendarium/09-11:
+- titulus: -rubrica-tridentina-dicuntur-
+calendarium/09-12:
+- titulus: s--nominis-beatae-mariae-virginis
+calendarium/09-14:
+- titulus: in-exaltatione-sanctae-crucis
+calendarium/09-15:
+- classis: 2
+  titulus: septem-dolorum-beatae-mariae-virginis
+calendarium/09-16:
+- titulus: ss--cornelii-papae-et-cypriani-episcopi--martyrum
+calendarium/09-17:
+- titulus: impressionis-stigmatum-s--francisci
+calendarium/09-18:
+- titulus: s--josephi-de-cupertino-confessoris
+calendarium/09-19:
+- titulus: s--januarii-episcopi-et-sociorum-martyrum
+calendarium/09-20:
+- titulus: s--eustachii-et-sociorum-martyrum
+calendarium/09-21:
+- classis: 2
+  titulus: s--matthaei-apostoli-et-evangelistae
+calendarium/09-22:
+- titulus: s--thomae-de-villanova-episcopi-et-confessoris
+calendarium/09-23:
+- titulus: s--lini-papae-et-martyris
+calendarium/09-24:
+- titulus: beatae-mariae-virginis-de-mercede
+calendarium/09-26:
+- titulus: ss--cypriani-et-justinae-martyrum
+calendarium/09-27:
+- titulus: ss--cosmae-et-damiani-martyrum
+calendarium/09-28:
+- titulus: s--wenceslai-ducis-et-martyris
+calendarium/09-29:
+- classis: 1
+  titulus: in-dedicatione-s--michaelis-archangelis
+calendarium/09-30:
+- titulus: s--hieronymi-presbyteris-confessoris-et-ecclesiae-doctoris
+calendarium/093-3:
+- titulus: feria-quarta-quattuor-temporum-septembris
+calendarium/093-5:
+- titulus: feria-sexta-quattuor-temporum-septembris
+calendarium/093-6:
+- titulus: sabbato-quattuor-temporum-septembris
+calendarium/10-01:
+- titulus: s--remigii-episcopi-confessoris
+calendarium/10-02:
+- titulus: ss--angelorum-custodum
+calendarium/10-03:
+- titulus: s--theresiae-a-jesu-infante-virginis
+calendarium/10-04:
+- titulus: s--francisci-confessoris
+calendarium/10-05:
+- titulus: ss--placidi-et-sociorum-martyrum
+calendarium/10-06:
+- titulus: s--brunonis-confessoris
+calendarium/10-07:
+- titulus: sanctissimi-rosarii-beatae-mariae-virginis
+calendarium/10-08:
+- titulus: s--birgittae-viduae
+calendarium/10-09:
+- titulus: s--joannis-leonardi-confessoris
+calendarium/10-10:
+- titulus: s--francisci-borgiae-confessoris
+calendarium/10-11:
+- classis: 2
+  titulus: maternitatis-beatae-mariae-virginis
+calendarium/10-13:
+- titulus: s--eduardi-regis-confessoris
+calendarium/10-14:
+- titulus: s--callisti-papae-et-martyris
+calendarium/10-15:
+- titulus: s--teresiae-virginis
+calendarium/10-16:
+- titulus: s--hedwigis-viduae
+calendarium/10-17:
+- titulus: s--margaritae-mariae-alacoque-virginis
+calendarium/10-18:
+- classis: 2
+  titulus: s--lucae-evangelistae
+calendarium/10-19:
+- titulus: s--petri-de-alcantara-confessoris
+calendarium/10-20:
+- titulus: s--joannis-cantii-confessoris
+calendarium/10-21:
+- titulus: s--hilarionis-abbatis
+calendarium/10-23:
+- titulus: s--antonii-mariae-claret-episcopi-confessoris
+calendarium/10-24:
+- titulus: s--raphaelis-archangeli
+calendarium/10-25:
+- titulus: ss--chrysanthi-et-dariae-martyrum
+calendarium/10-26:
+- titulus: s--evaristi-papae-et-martyris
+calendarium/10-28:
+- classis: 2
+  titulus: ss--simonis-et-judae-apostolorum
+calendarium/10-Dominica-Ult:
+- classis: 1
+  titulus: domini-nostri-jesu-christi-regis
+calendarium/10-Sergius-et-soc:
+- titulus: ss--sergii--bacchi--marcelli-et-apuleji-martyrum
+calendarium/11-01:
+- classis: 1
+  titulus: omnium-sanctorum
+calendarium/11-02:
+- titulus: in-commemoratione-omnium-fidelium-defunctorum
+calendarium/11-04:
+- titulus: s--caroli-episcopi-et-confessoris
+calendarium/11-08:
+- titulus: in-octava-omnium-sanctorum
+calendarium/11-09:
+- classis: 2
+  titulus: in-dedicatione-basilicae-ss--salvatoris
+calendarium/11-10:
+- titulus: s--andreae-avellini-confessoris
+calendarium/11-11:
+- titulus: s--martini-episcopi-et-confessoris
+calendarium/11-12:
+- titulus: s--martini-papae-et-martyris
+calendarium/11-13:
+- titulus: s--didaci-confessoris
+calendarium/11-14:
+- titulus: s--josaphat-episcopi-et-martyris
+calendarium/11-15:
+- titulus: s--alberti-magni-episcopi-confessoris-et-ecclesiae-doctoris
+calendarium/11-16:
+- titulus: s--gertrudis-virginis
+calendarium/11-17:
+- titulus: s--gregorii-thaumaturgi-episcopi-et-confessoris
+calendarium/11-18:
+- titulus: in-dedicatione-basilicarum-ss--apostolorum-petri-et-pauli
+calendarium/11-19:
+- titulus: s--elisabeth-viduae
+calendarium/11-20:
+- titulus: s--felicis-valois-confessoris
+calendarium/11-21:
+- titulus: in-praesentatione-beatae-mariae-virginis
+calendarium/11-22:
+- titulus: s--caeciliae-virginis-et-martyris
+calendarium/11-23:
+- titulus: s--clementis-papae-et-martyris
+calendarium/11-24:
+- titulus: s--joannis-a-cruce-confessoris-et-ecclesiae-doctoris
+calendarium/11-25:
+- titulus: s--catharinae-virginis-et-martyris
+calendarium/11-26:
+- titulus: s--silvestri-abbatis
+calendarium/11-29:
+- titulus: in-vigilia-s--andreae-apostoli
+calendarium/11-30:
+- classis: 2
+  titulus: s--andreae-apostoli
+calendarium/12-02:
+- titulus: s--bibianae-virginis-et-martyris
+calendarium/12-03:
+- titulus: s--francisci-xaverii-confessoris
+calendarium/12-04:
+- titulus: s--petri-chrysologi-episcopi-confessoris-et-ecclesiae-doctoris
+calendarium/12-05:
+- titulus: s--sabbae-abbatis
+calendarium/12-06:
+- titulus: s--nicolai-episcopi-et-confessoris
+calendarium/12-07:
+- titulus: s--ambrosii-episcopi-confessoris-et-ecclesiae-doctoris
+calendarium/12-08:
+- classis: 1
+  titulus: in-conceptione-immaculata-beatae-mariae-virginis
+calendarium/12-10:
+- titulus: de-iii-die-infra-octavam-conceptionis-immaculatae-beatae-mariae-virginis
+calendarium/12-11:
+- titulus: s--damasi-papae-et-confessoris
+calendarium/12-12:
+- titulus: beatae-mariae-virginis-de-guadalupe
+calendarium/12-13:
+- titulus: s--luciae-virginis-et-martyris
+calendarium/12-16:
+- titulus: s--eusebii-episcopi-et-martyris
+calendarium/12-21:
+- classis: 2
+  titulus: s--thomae-apostoli
+calendarium/12-24:
+- classis: 1
+  titulus: in-vigilia-nativitatis-domini
+calendarium/12-25:
+- classis: 1
+  titulus: in-nativitate-domini
+calendarium/12-26:
+- classis: 2
+  titulus: s--stephani-protomartyris
+calendarium/12-27:
+- classis: 2
+  titulus: s--joannis-apostoli-et-evangelistae
+calendarium/12-28:
+- classis: 2
+  titulus: ss--innocentium
+calendarium/12-29:
+- titulus: s--thomae-episcopi-et-martyris
+calendarium/12-30:
+- titulus: die-vi-infra-octavam-nativitatis
+calendarium/12-31:
+- titulus: s--silvestri-papae-et-confessoris
+calendarium/Adv1-0:
+- titulus: ''
+calendarium/Adv2-0:
+- titulus: ''
+calendarium/Adv3-0:
+- titulus: ''
+calendarium/Adv3-3:
+- titulus: feria-iv-quattuor-temporum-in-adventu
+calendarium/Adv3-5:
+- titulus: feria-vi-quattuor-temporum-in-adventu
+calendarium/Adv3-6:
+- titulus: sabbato-quattuor-temporum-in-adventu
+calendarium/Adv4-0:
+- titulus: ''
+calendarium/Adv4-6:
+- titulus: sabbato-in-hebdomadam-iv-adventus
+calendarium/Epi1-0:
+- titulus: sanctae-familiae-jesu-mariae-joseph
+calendarium/Nat1-0:
+- titulus: dominica-infra-octavam-nativitatis
+calendarium/Nat2-0:
+- classis: 2
+  titulus: sanctissimi-nominis-jesu
+calendarium/Pasc0-0:
+- classis: 1
+  titulus: dominica-resurrectionis
+calendarium/Pasc0-1:
+- classis: 1
+  titulus: die-ii-infra-octavam-paschae
+calendarium/Pasc0-2:
+- classis: 1
+  titulus: die-iii-infra-octavam-paschae
+calendarium/Pasc0-3:
+- classis: 1
+  titulus: die-iv-infra-octavam-paschae
+calendarium/Pasc0-4:
+- classis: 1
+  titulus: die-v-infra-octavam-paschae
+calendarium/Pasc0-5:
+- classis: 1
+  titulus: "die-vi-infra-octavam-pasch\xE6"
+calendarium/Pasc0-6:
+- classis: 1
+  titulus: sabbato-in-albis
+calendarium/Pasc1-0:
+- classis: 1
+  titulus: "dominica-in-albis-in-octava-pasch\xE6"
+calendarium/Pasc2-3:
+- titulus: ''
+calendarium/Pasc2-4:
+- titulus: ''
+calendarium/Pasc2-5:
+- titulus: ''
+calendarium/Pasc2-6:
+- titulus: ''
+calendarium/Pasc3-0:
+- titulus: ''
+calendarium/Pasc3-1:
+- titulus: ''
+calendarium/Pasc3-2:
+- titulus: ''
+calendarium/Pasc3-3:
+- titulus: ''
+calendarium/Pasc5-1:
+- titulus: feria-secunda-in-rogationibus
+calendarium/Pasc5-2:
+- titulus: feria-tertia-in-rogationibus
+calendarium/Pasc5-3:
+- titulus: feria-quarta-in-rogationibus-in-vigilia-ascensionis
+calendarium/Pasc5-4:
+- classis: 1
+  titulus: in-ascensione-domini
+calendarium/Pasc5-5:
+- titulus: feria-vi-infra-octavam-ascensionis
+calendarium/Pasc5-6:
+- titulus: sabbato-infra-octavam-ascensionis
+calendarium/Pasc6-0:
+- titulus: dominica-infra-octavam-ascensionis
+calendarium/Pasc6-1:
+- titulus: feria-ii-infra-octavam-ascensionis
+calendarium/Pasc6-2:
+- titulus: feria-iii-infra-octavam-ascensionis
+calendarium/Pasc6-3:
+- titulus: feria-iv-infra-octavam-ascensionis
+calendarium/Pasc6-4:
+- titulus: feria-v-infra-hebdomadam-post-ascensionem
+calendarium/Pasc6-5:
+- titulus: feria-vi-post-octavam-ascensionis
+calendarium/Pasc6-6:
+- classis: 1
+  titulus: sabbato-in-vigilia-pentecostes
+calendarium/Pasc7-0:
+- classis: 1
+  titulus: dominica-pentecostes
+calendarium/Pasc7-1:
+- classis: 1
+  titulus: die-ii-infra-octavam-pentecostes
+calendarium/Pasc7-2:
+- classis: 1
+  titulus: die-iii-infra-octavam-pentecostes
+calendarium/Pasc7-3:
+- classis: 1
+  titulus: feria-quarta-quattuor-temporum-pentecostes
+calendarium/Pasc7-4:
+- classis: 1
+  titulus: feria-quinta-infra-octavam-pentecostes
+calendarium/Pasc7-5:
+- classis: 1
+  titulus: feria-sexta-quattuor-temporum-pentecostes
+calendarium/Pasc7-6:
+- classis: 1
+  titulus: sabbato-quattuor-temporum-pentecostes
+calendarium/Pent01-0:
+- classis: 1
+  titulus: dominica-sanctissimae-trinitatis
+calendarium/Pent01-4:
+- titulus: festum-sanctissimi-corporis-christi-cum-octava-privilegiate-ii-ordinis
+calendarium/Pent01-5:
+- titulus: feria-sexta-infra-octavam-corporis-christi
+calendarium/Pent02-0:
+- titulus: ''
+calendarium/Pent02-1:
+- titulus: feria-secunda-infra-octavam-corporis-christi
+calendarium/Pent02-2:
+- titulus: feria-tertia-infra-octavam-corporis-christi
+calendarium/Pent02-3:
+- titulus: feria-quarta-infra-octavam-corporis-christi
+calendarium/Pent02-4:
+- titulus: in-octava-sanctissimi-corporis-christi
+calendarium/Pent02-5:
+- classis: 1
+  titulus: sanctissimi-cordis-domini-nostri-jesu-christi
+calendarium/Pent02-6:
+- titulus: ''
+calendarium/Pent03-0:
+- titulus: ''
+calendarium/Pent03-1:
+- titulus: ''
+calendarium/Pent03-2:
+- titulus: ''
+calendarium/Pent03-3:
+- titulus: ''
+calendarium/Pent03-4:
+- titulus: ''
+calendarium/Pent03-5:
+- titulus: ''
+calendarium/Pent24-0:
+- titulus: dominica-xxiv-et-ultima-post-pentecosten
+calendarium/Quad1-3:
+- titulus: feria-quarta-quattuor-temporum-quadragesimae
+calendarium/Quad1-5:
+- titulus: feria-sexta-quattuor-temporum-quadragesimae
+calendarium/Quad1-6:
+- titulus: sabbato-quattuor-temporum-quadragesimae
+calendarium/Quad3-5:
+- titulus: feria-sexta-infra-hebdomadam-i-in-quadragesima
+calendarium/Quad5-0:
+- titulus: dominica-i-passionis
+calendarium/Quad5-5:
+- titulus: ''
+calendarium/Quad6-0:
+- classis: 1
+  titulus: dominica-ii-passionis-seu-in-palmis
+calendarium/Quad6-1:
+- titulus: "feria-secunda-majoris-hebdomad\xE6"
+calendarium/Quad6-2:
+- titulus: "feria-tertia-majoris-hebdomad\xE6"
+calendarium/Quad6-3:
+- titulus: "feria-quarta-majoris-hebdomad\xE6"
+calendarium/Quad6-4:
+- classis: 1
+  titulus: feria-quinta-in-cena-domini
+calendarium/Quad6-5:
+- titulus: feria-sexta-in-parasceve
+calendarium/Quad6-6:
+- classis: 1
+  titulus: sabbato-sancto
+calendarium/Quadp3-3:
+- classis: 1
+  titulus: feria-iv-cinerum
+calendarium/Quadp3-4:
+- titulus: feria-v-post-cineres
+calendarium/Quadp3-5:
+- titulus: feria-vi-post-cineres
+calendarium/Quadp3-6:
+- titulus: sabbato-post-cineres
+calendarium/SMariaeInSabbato:
+- titulus: sanctae-mariae-in-sabbato
+calendarium/infra-oct-12-25:
+- titulus: die-infra-octavam-nativitatis
+calendarium/infra-oct-12-27:
+- titulus: die-infra-octavam-s--joannis
+calendarium/infra-oct-12-28:
+- titulus: die-infra-octavam-ss--innocentium
+

@@ -12,3 +12,15 @@ def roman(n):
 
     return ''.join('M' * thousands, _hundreds_map[hundreds], _tens_map[tens],
                    _units_map[units])
+
+
+"""Day-names canonicalised to be human-readable but computer-friendly."""
+day_ids = [
+    "dominica",
+    "feria-ii",
+    "feria-iii",
+    "feria-iv",
+    "feria-v",
+    "feria-vi",
+    "sabbato",
+]

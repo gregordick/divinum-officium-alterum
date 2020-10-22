@@ -4,6 +4,9 @@ from .util import roman
 
 
 class Office(ABC):
+    def __init__(self, rank):
+        self._rank = rank
+
     @abstractmethod
     def vespers_psalms(self, is_first):
         pass
@@ -32,9 +35,14 @@ class Office(ABC):
     def title(self):
         pass
 
+    @property
+    def rank(self):
+        return self._rank
+
 
 class SundayOffice(Office):
-    def __init__(self, week_num):
+    def __init__(self, week_num, rank):
+        super().__init__(rank)
         self._week_num = week_num
 
     @property
@@ -74,12 +82,16 @@ class SundayPerAnnumOffice(SundayOffice):
 class SundayAfterPentecostOffice(SundayPerAnnumOffice):
     _season = 'pent'
 
+    def __init__(self, *args):
+        super().__init__(*args, rank=2)
+
     def title(self):
         return "Dominica %s. post Pentecosten" % (roman(self._week_num),)
 
 
 class Feast(Office):
-    def __init__(self, root):
+    def __init__(self, root, rank):
+        super().__init__(rank)
         self._root = 'proprium/%s' % (root,)
 
     def vespers_psalms(self, is_first):
