@@ -15,6 +15,8 @@ class Text:
         return self.text
 
 
+class Antiphon(Text): pass
+
 class Chapter(Group): pass
 class Hymn(Group): pass
 class Versicle(Group): pass
@@ -29,10 +31,10 @@ class PsalmishWithAntiphon:
 
     def resolve(self):
         # XXX: Proper classes, Gloria.
-        yield Text(self.antiphon)
+        yield Antiphon(self.antiphon)
         for psalmish in self.psalmishes:
             yield Text(psalmish)
-        yield Text(self.antiphon)
+        yield Antiphon(self.antiphon)
 
 
 def deus_in_adjutorium():

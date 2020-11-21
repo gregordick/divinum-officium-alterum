@@ -4,6 +4,9 @@ from .util import roman
 
 
 class Office(ABC):
+    def __init__(self, rank):
+        self.rank = rank
+
     @abstractmethod
     def vespers_psalms(self, is_first):
         pass
@@ -32,9 +35,18 @@ class Office(ABC):
     def title(self):
         pass
 
+    @property
+    def prefer_to_sundays(self):
+        return False
 
-class SundayOffice(Office):
-    def __init__(self, week_num):
+    @property
+    def universal(self):
+        return True
+
+
+class Sunday(Office):
+    def __init__(self, week_num, rank):
+        super().__init__(rank)
         self._week_num = week_num
 
     @property
@@ -54,7 +66,7 @@ class SundayOffice(Office):
         return 'proprium/%s/oratio' % (self._week,)
 
 
-class SundayPerAnnumOffice(SundayOffice):
+class SundayPerAnnum(Sunday):
     def vespers_psalms(self, is_first):
         return ('psalterium/ad-vesperas/dominica/antiphonae',
                 'psalterium/ad-vesperas/dominica/psalmi')
@@ -71,15 +83,19 @@ class SundayPerAnnumOffice(SundayOffice):
         return 'psalterium/ad-vesperas/dominica/versiculum'
 
 
-class SundayAfterPentecostOffice(SundayPerAnnumOffice):
+class SundayAfterPentecost(SundayPerAnnum):
     _season = 'pent'
+
+    def __init__(self, *args):
+        super().__init__(*args, rank=2)
 
     def title(self):
         return "Dominica %s. post Pentecosten" % (roman(self._week_num),)
 
 
 class Feast(Office):
-    def __init__(self, root):
+    def __init__(self, root, rank):
+        super().__init__(rank)
         self._root = 'proprium/%s' % (root,)
 
     def vespers_psalms(self, is_first):
@@ -104,3 +120,15 @@ class Feast(Office):
     def title(self):
         # XXX:
         pass
+
+
+class BVMOnSaturday(Feast): pass
+
+class Vigil(Office): pass
+
+class Feria(Office): pass
+class LentenFeria(Feria): pass
+class AdventFeria(Feria): pass
+
+class WithinOctave(Office): pass
+class OctaveDay(Office): pass
