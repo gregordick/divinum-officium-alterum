@@ -2,22 +2,17 @@ from . import parts
 from . import util
 
 class Vespers:
-    def __init__(self, date, data_map, is_first, occurring, concurring,
-                 commemorations):
+    def __init__(self, date, data_map, office, concurring, commemorations):
         self._date = date
         self._data_map = data_map
-        self._is_first = is_first
+        self._office = office
+        self._is_first = office in concurring
 
-        # Find the winning office, and keep lists of all _other_
-        # occurring/concurring offices.
-        self._occurring = list(occurring)
-        self._concurring = list(concurring)
-        day_offices = self._concurring if is_first else self._occurring
-        self._office = day_offices.pop(0)
+        # Knowing the concurring offices allows us to determine whether a
+        # commemoration is for first Vespers.
+        self._concurring = concurring
 
         self._commemorations = list(commemorations)
-        assert all(commem in self._occurring + self._concurring
-                   for commem in self._commemorations)
 
     def resolve(self):
         yield parts.deus_in_adjutorium()

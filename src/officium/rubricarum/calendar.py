@@ -1,4 +1,13 @@
 from officium.calendar import CalendarResolver, Resolution
+from officium.offices import (
+    BVMOnSaturday,
+    Feast,
+    Feria,
+    LentenFeria,
+    Sunday,
+    Vigil,
+    WithinOctave,
+)
 
 class CalendarResolver1962(CalendarResolver):
     # The vigil of the Epiphany had been abolished, allowing Nat2-0 to be
@@ -147,10 +156,85 @@ class CalendarResolver1962(CalendarResolver):
 
         assert False, "Unexpected occurrence: (%r, %r)" % (a, b)
 
-    @staticmethod
-    def occurrence_resolution(a, b):
-        if b.rank < a.rank:
-            a, b = b, a
+    @classmethod
+    def occurrence_resolution(cls, a, b):
         if a.rank < b.rank:
-            return (a, Resolution.COMMEMORATE)
-        return occurrence_ranktie_resolution(a, b)
+            a, b = b, a
+        if b.rank < a.rank:
+            # The office of the Blessed Virgin Mary on Saturday is omitted when
+            # it doesn't win.
+            if isinstance(a, BVMOnSaturday):
+                return (b, Resolution.OMIT)
+
+            # Fourth-class ferias are never commemorated, and neither is any
+            # feria on a first-class vigil.
+            if (isinstance(a, Feria) and
+                (a.rank == 4 or (isinstance(b, Vigil) and b.rank == 1))):
+                return (b, Resolution.OMIT)
+
+            privileged = isinstance(a, Sunday) or (isinstance(a, Feria) and
+                                                   a.rank <= 3)
+
+            # Unprivileged commemorations are omitted on Sundays and
+            # first-class days.
+            if (b.rank == 1 or isinstance(b, Sunday)) and not privileged:
+                return (b, Resolution.OMIT)
+
+            # Otherwise, commemorate.
+            return (b, Resolution.COMMEMORATE)
+
+        return cls.occurrence_ranktie_resolution(a, b)
+
+    @classmethod
+    def has_first_vespers(cls, office, date):
+        if isinstance(office, Sunday):
+            return True
+        if isinstance(office, Feast):
+            if office.rank == 1:
+                return True
+            if (office.rank == 2 and office.of_the_lord and
+                date.day_of_week == 0):
+                return True
+        return False
+
+    @classmethod
+    def privileged_commemoration(cls, office, date):
+        if office.rank == 1:
+            return True
+        if isinstance(office, Feria) and office.rank <= 3:
+            return True
+        if cls.has_first_vespers(office, date):
+            # This catches Sundays, including feasts of the Lord on a Sunday.
+            return True
+        if isinstance(office, WithinOctave):
+            # RG 108c: within the octave of Christmas, but this is equivalent.
+            return True
+        return False
+
+    @classmethod
+    def vespers_commem_filter(cls, commemorations, date, concurring):
+        def privileged(office):
+            office_date = date + 1 if office in concurring else date
+            return cls.privileged_commemoration(office, office_date)
+        return list(filter(privileged, commemorations))
+
+    @classmethod
+    def concurrence_resolution(cls, preceding, following, date):
+        # Since we have concurrence at all, the following office must be a
+        # Sunday (or a feast of the Lord behaving like a Sunday) or a
+        # first-class feast.  The only way that the preceding office can win,
+        # then, is if it's first-class or if it's a second-class feast and the
+        # following is second-class (necessarily a Sunday).
+        if preceding.rank == 1 or (preceding.rank == 2 and following.rank == 2):
+            return (preceding, Resolution.COMMEMORATE)
+
+        # Now we know that the following office wins, so we need only determine
+        # whether to omit the preceding office, which happens if and only if
+        # that office is not privileged in commemoration.
+        if cls.privileged_commemoration(preceding, date):
+            return (following, Resolution.COMMEMORATE)
+
+        # Otherwise, office of the following, nothing of the preceding.  The
+        # reverse situation never happens: when a day has first Vespers, it's
+        # always privileged in commemoration.
+        return (following, Resolution.OMIT)

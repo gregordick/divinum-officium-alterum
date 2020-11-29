@@ -1,4 +1,6 @@
-from officium import calendar
+from officium.calendar import CalendarResolver, Resolution
 
-class CalendarResolverDA(calendar.CalendarResolver):
-    pass
+class CalendarResolverDA(CalendarResolver):
+    @classmethod
+    def occurrence_resolution(cls, a, b):
+        return (b, Resolution.COMMEMORATE)

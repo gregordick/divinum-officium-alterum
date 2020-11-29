@@ -1,11 +1,25 @@
 from abc import ABC, abstractmethod
+import enum
 
 from .util import roman
+
+
+class Rite(enum.Enum):
+    SIMPLE = 0
+    SEMIDOUBLE = 1
+    DOUBLE = 2
+    GREATER_DOUBLE = 3
 
 
 class Office(ABC):
     def __init__(self, rank):
         self.rank = rank
+
+    def __str__(self):
+        return "%s: %s" % (self.__class__.__name__, self.title())
+
+    def __repr__(self):
+        return str(self)
 
     @abstractmethod
     def vespers_psalms(self, is_first):
@@ -43,6 +57,11 @@ class Office(ABC):
     def universal(self):
         return True
 
+    @property
+    @abstractmethod
+    def rite(self):
+        pass
+
 
 class Sunday(Office):
     def __init__(self, week_num, rank):
@@ -64,6 +83,10 @@ class Sunday(Office):
 
     def oration(self):
         return 'proprium/%s/oratio' % (self._week,)
+
+    @property
+    def rite(self):
+        return Rite.SEMIDOUBLE
 
 
 class SundayPerAnnum(Sunday):
@@ -119,8 +142,16 @@ class Feast(Office):
 
     def title(self):
         # XXX:
-        pass
+        return self._root
 
+    @property
+    def of_the_lord(self):
+        return False
+
+    @property
+    def rite(self):
+        # XXX:
+        return Rite.DOUBLE
 
 class BVMOnSaturday(Feast): pass
 

@@ -306,7 +306,10 @@ class CalendarResolver(ABC):
         # Override this method.
         raise NotImplementedError()
 
-    def resolve_occurrence(self, offices):
+    def resolve_occurrence(self, date, calendar):
+        calpoints = self.generate_calpoints(date)
+        offices = itertools.chain.from_iterable(self.calpoint_offices(c)
+                                                for c in calpoints)
         resolver = self
         class OccurrenceOrderer:
             def __init__(self, office):
@@ -317,18 +320,75 @@ class CalendarResolver(ABC):
                                                             other.office)
                 return resolution[0] is self.office
 
-        return sorted(offices, key=OccurrenceOrderer)
+        ordered = list(sorted(offices, key=OccurrenceOrderer))
+        winner = ordered.pop(0)
+        def keep(other):
+            win_check, resolution = self.occurrence_resolution(winner, other)
+            assert win_check == winner
+            return resolution != Resolution.OMIT
+        return [winner] + list(filter(keep, ordered))
 
     def resolve_commemorations(self, occurring, concurring=[]):
-        # XXX: Support generators?
-        return sorted(occurring + concurring)
+        # XXX: Support generators?  And sort!
+        return occurring + concurring
+
+    @classmethod
+    @abstractmethod
+    def has_first_vespers(cls, a, b):
+        # Override this method.
+        raise NotImplementedError()
+
+    @classmethod
+    def has_second_vespers(cls, office, date):
+        if isinstance(office, offices.Vigil):
+            return False
+        if isinstance(office, offices.Feria):
+            return True
+        return office.rite != offices.Rite.SIMPLE
+
+    @classmethod
+    def vespers_commem_filter(cls, commemorations, date, concurring):
+        return commemorations
 
     def offices(self, date, calendar):
-        calpoints = self.generate_calpoints(date)
-        occurring = itertools.chain.from_iterable(self.calpoint_offices(c)
-                                                  for c in calpoints)
-        occurring = self.resolve_occurrence(occurring)
-        commemorations = self.resolve_commemorations(occurring[1:])
-        return [Vespers(date, self._data_map, is_first=False,
-                        occurring=occurring, concurring=[],
-                        commemorations=commemorations)]
+        occurring = filter(lambda office: self.has_second_vespers(office, date),
+                           self.resolve_occurrence(date, calendar))
+        concurring = filter(lambda office: self.has_first_vespers(office, date),
+                            self.resolve_occurrence(date + 1, calendar))
+        occurring, concurring = list(occurring), list(concurring)
+
+        # Arbitrate between occurring and concurring.
+        if occurring and concurring:
+            office, _ = self.concurrence_resolution(occurring[0], concurring[0],
+                                                    date)
+        elif occurring:
+            office = occurring[0]
+        else:
+            assert concurring
+            office = concurring[0]
+
+        second_vespers = occurring and office is occurring[0]
+
+        # Should we keep an office that concurs with this one?
+        def keep(other):
+            args = (office, other) if second_vespers else (other, office)
+            args += (date,)
+            _, resolution = self.concurrence_resolution(*args)
+            return resolution != Resolution.OMIT
+
+        # Find the commemorations.
+        if second_vespers:
+            occurring_commem = occurring[1:]
+            concurring_commem = list(filter(keep, concurring))
+        else:
+            assert office is concurring[0]
+            concurring_commem = occurring[1:]
+            occurring_commem = list(filter(keep, occurring))
+
+        # Sort the commemorations.
+        commemorations = self.resolve_commemorations(occurring_commem,
+                                                     concurring_commem)
+
+        return [Vespers(date, self._data_map, office, concurring,
+                        self.vespers_commem_filter(commemorations, date,
+                                                   concurring))]
