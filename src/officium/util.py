@@ -10,8 +10,8 @@ def roman(n):
     hundreds, n = divmod(n, 100)
     tens, units = divmod(n, 10)
 
-    return ''.join('M' * thousands, _hundreds_map[hundreds], _tens_map[tens],
-                   _units_map[units])
+    return ''.join(['M' * thousands, _hundreds_map[hundreds], _tens_map[tens],
+                    _units_map[units]])
 
 
 """Day-names canonicalised to be human-readable but computer-friendly."""
