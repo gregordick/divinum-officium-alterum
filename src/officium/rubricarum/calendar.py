@@ -1,10 +1,15 @@
 from officium.calendar import CalendarResolver, Resolution
 from officium.offices import (
+    AdventFeria,
+    AdventSunday,
     BVMOnSaturday,
     Feast,
     Feria,
     LentenFeria,
+    OctaveDay,
+    ProperSunday,
     Sunday,
+    SundayAfterPentecost,
     Vigil,
     WithinOctave,
 )
@@ -27,7 +32,11 @@ class CalendarResolver1962(CalendarResolver):
         return date - date.day_of_week
 
     def reading_day(self, date):
-        (month, week, dow) = super().reading_day(date)
+        reading_day = super().reading_day(date)
+        if reading_day is None:
+            return None
+
+        (month, week, dow) = reading_day
 
         # The third week of October vanishes in years when its Sunday would
         # otherwise fall on the 18th-21st (i.e. when the first Sunday in
@@ -198,6 +207,10 @@ class CalendarResolver1962(CalendarResolver):
         return False
 
     @classmethod
+    def has_second_vespers(cls, office, date):
+        return not isinstance(office, Vigil)
+
+    @classmethod
     def privileged_commemoration(cls, office, date):
         if office.rank == 1:
             return True
@@ -238,3 +251,23 @@ class CalendarResolver1962(CalendarResolver):
         # reverse situation never happens: when a day has first Vespers, it's
         # always privileged in commemoration.
         return (following, Resolution.OMIT)
+
+    @classmethod
+    def fill_implicit_descriptor_fields(cls, desc_class, desc):
+        implicit_rank = {
+            AdventFeria: 3,
+            AdventSunday: 2,
+            BVMOnSaturday: 4,
+            Feast: 3,
+            Feria: 4,
+            LentenFeria: 3,
+            ProperSunday: 2,
+            SundayAfterPentecost: 2,
+            Vigil: 2,
+            WithinOctave: 2,
+            OctaveDay: 2,
+        }
+        if 'classis' not in desc:
+            # XXX: This should be more sophisticated than a dict-lookup.
+            # For example: simples are commemorations; privileged ferias; etc.
+            desc['classis'] = implicit_rank[desc_class]
