@@ -1,7 +1,6 @@
 # XXX: This module still has scars from the time when it tried to manage the
 # keys for the various office-parts.
 
-from abc import ABC, abstractmethod
 import enum
 
 from .util import roman
@@ -14,7 +13,7 @@ class Rite(enum.Enum):
     GREATER_DOUBLE = 3
 
 
-class Office(ABC):
+class Office:
     def __init__(self, desc):
         self.desc = dict(desc)
 
@@ -89,39 +88,18 @@ class SundayPerAnnum(Sunday):
 
 
 class SundayAfterPentecost(SundayPerAnnum):
-    season = 'pent'
-
     def title(self):
         return "Dominica %s. post Pentecosten" % (roman(self.week_num),)
 
 
-class AdventOfficeMixin:
-    season = 'adv'
-
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.week_root = 'proprium/%s%d' % (self.season, self.week_num)
-        # TODO: proprium or psalterium?
-        self._season_root = 'proprium/%s' % (self.season,)
-
-
-class AdventSunday(AdventOfficeMixin, Sunday):
-    def vespers_psalms(self, is_first):
-        return ('%s/ad-vesperas/antiphonae' % (self.week_root,),
-                'psalterium/ad-vesperas/dominica/psalmi')
-
+class AdventSunday(Sunday):
     def title(self):
         return "Dominica %s. Adventus" % (roman(self.week_num),)
 
 
-class AdventFeria(AdventOfficeMixin, Feria):
+class AdventFeria(Feria):
     def title(self):
         return "Dominica %s. Adventus" % (roman(self.week_num),)
-
-
-class ProperSunday(ProperOfficeMixin, Sunday):
-    # XXX:
-    season = 'nunquam'
 
 
 class BVMOnSaturday(Feast): pass

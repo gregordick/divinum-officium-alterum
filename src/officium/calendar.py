@@ -313,7 +313,7 @@ class CalendarResolver(ABC):
             try:
                 return cls.sunday_classes[desc['tempus']]
             except KeyError:
-                return offices.ProperSunday
+                return offices.Sunday
         elif desc['qualitas'] == 'feria':
             return cls.feria_classes.get(desc.get('tempus'), offices.Feria)
         elif desc['qualitas'] == 'infra-octavam':
