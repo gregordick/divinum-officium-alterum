@@ -409,7 +409,7 @@ class CalendarResolver(ABC):
         elif occurring:
             office = occurring[0]
         else:
-            assert concurring
+            assert concurring, date
             office = concurring[0]
 
         second_vespers = occurring and office is occurring[0]
