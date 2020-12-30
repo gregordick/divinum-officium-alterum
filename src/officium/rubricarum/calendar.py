@@ -110,10 +110,12 @@ class CalendarResolver1962(CalendarResolver):
                 return (b, Resolution.COMMEMORATE)
             else:
                 # No feasts.  This should happen only when a second-class
-                # Sunday occurs with a second-class vigil.
+                # Sunday occurs with a second-class vigil or day within an
+                # octave.
                 if isinstance(a, Sunday):
                     a, b = b, a
-                if isinstance(a, Vigil) and isinstance(b, Sunday):
+                if (isinstance(a, (Vigil, WithinOctave)) and
+                    isinstance(b, Sunday)):
                     return (b, Resolution.OMIT)
                 # Fall through to assertion at the bottom of the function.
         elif rank == 3:
