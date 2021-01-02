@@ -344,7 +344,7 @@ class CalendarResolver(ABC):
         # Override this method.
         raise NotImplementedError()
 
-    def resolve_occurrence(self, date, calendar):
+    def resolve_occurrence(self, date):
         calpoints = self.generate_calpoints(date)
         offices = itertools.chain.from_iterable(self.calpoint_offices(c)
                                                 for c in calpoints)
@@ -390,7 +390,7 @@ class CalendarResolver(ABC):
         # Override this method.
         raise NotImplementedError()
 
-    def resolve_transfer(self, calendar, start, end):
+    def resolve_transfer(self, start, end):
         assert start <= end
 
         # Offices can be transferred by up to a year, so start from a year ago.
@@ -403,7 +403,7 @@ class CalendarResolver(ABC):
         while current.day_of_week != 0:
             current -= 1
         while current <= end:
-            offices = self.resolve_occurrence(current, calendar)
+            offices = self.resolve_occurrence(current)
             if transfer and self.can_transfer(transfer[0], offices):
                 offices = [transfer[0]] + offices
                 transfer = transfer[1:]
@@ -429,8 +429,8 @@ class CalendarResolver(ABC):
 
         return result
 
-    def offices(self, date, calendar):
-        today, tomorrow = self.resolve_transfer(calendar, date, date + 1)
+    def offices(self, date):
+        today, tomorrow = self.resolve_transfer(date, date + 1)
         occurring = [office for office in today
                      if self.has_second_vespers(office, date)]
         concurring = [office for office in tomorrow
