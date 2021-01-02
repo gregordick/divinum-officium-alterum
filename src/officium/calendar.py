@@ -50,6 +50,10 @@ class CalendarResolver(ABC):
     def __init__(self, data_map):
         self._data_map = data_map
 
+        # XXX: Temporary crude cache to make regression tests faster.
+        self._resolve_transfer_cache = None
+        self._resolve_transfer_cache_base = None
+
     @staticmethod
     def advent_sunday(year):
         """Returns the date of the first Sunday of Advent for the specified
@@ -392,6 +396,14 @@ class CalendarResolver(ABC):
 
     def resolve_transfer(self, start, end):
         assert start <= end
+
+        # XXX: Temporary external caching mechanism.
+        if self._resolve_transfer_cache_base is not None:
+            start_delta = start - self._resolve_transfer_cache_base
+            end_delta = end - self._resolve_transfer_cache_base
+            if (start_delta >= 0 and
+                end_delta - start_delta < len(self._resolve_transfer_cache)):
+                return self._resolve_transfer_cache[start_delta:end_delta + 1]
 
         # Offices can be transferred by up to a year, so start from a year ago.
         current = start - 366
