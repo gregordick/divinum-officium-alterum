@@ -13,21 +13,14 @@ BVM_SATURDAY_CALPOINT = 'SMariaeInSabbato'
 
 
 class Date(datetime.date):
-    def __new__(cls, year, month=None, day=None):
-        return super().__new__(cls, year, month, day)
-
     # pylint: disable=unused-argument
     def __init__(self, *args, **kwargs):
         super().__init__()
         self._day_of_week = self.isoweekday() % 7
 
-    @classmethod
-    def from_datetime_date(cls, date):
-        return cls(date.year, date.month, date.day)
-
     def __add__(self, days):
         base_result = super().__add__(datetime.timedelta(days=days))
-        return self.from_datetime_date(base_result)
+        return Date(base_result.year, base_result.month, base_result.day)
 
     def __sub__(self, days_or_date):
         if isinstance(days_or_date, self.__class__):
