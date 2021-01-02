@@ -272,3 +272,11 @@ class CalendarResolver1962(CalendarResolver):
             # XXX: This should be more sophisticated than a dict-lookup.
             # For example: simples are commemorations; privileged ferias; etc.
             desc['classis'] = implicit_rank[desc_class]
+
+    @classmethod
+    def can_transfer(cls, transfer_office, offices):
+        assert transfer_office.rank == 1
+        # The office can be transferred here if and only if it would win in
+        # occurrence.
+        winner, _ = cls.occurrence_resolution(transfer_office, offices[0])
+        return winner == transfer_office

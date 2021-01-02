@@ -367,11 +367,7 @@ class CalendarResolver(ABC):
 
         ordered = list(sorted(offices, key=OccurrenceOrderer))
         assert ordered, calpoints
-        winner = ordered.pop(0)
-        def keep(other):
-            _, resolution = self.occurrence_resolution(winner, other)
-            return resolution != Resolution.OMIT
-        return [winner] + list(filter(keep, ordered))
+        return ordered
 
     def resolve_commemorations(self, occurring, concurring=[]):
         # XXX: Support generators?  And sort!
@@ -395,12 +391,57 @@ class CalendarResolver(ABC):
     def vespers_commem_filter(cls, commemorations, date, concurring):
         return commemorations
 
+    @classmethod
+    @abstractmethod
+    def can_transfer(cls, transfer_office, offices):
+        # Override this method.
+        raise NotImplementedError()
+
+    def resolve_transfer(self, calendar, start, end):
+        assert start <= end
+
+        # Offices can be transferred by up to a year, so start from a year ago.
+        current = start - 366
+        transfer = []
+        result = []
+
+        # Round down to a Sunday.  TODO: Implement the resumption and
+        # anticipation of Sundays.
+        while current.day_of_week != 0:
+            current -= 1
+        while current <= end:
+            offices = self.resolve_occurrence(current, calendar)
+            if transfer and self.can_transfer(transfer[0], offices):
+                offices = [transfer[0]] + offices
+                transfer = transfer[1:]
+
+            # If any tail offices should be transferred, add them to the
+            # transfer list.
+            def versus_other(other):
+                _, resolution = self.occurrence_resolution(offices[0], other)
+                return resolution
+            new_transfers = [x for x in offices[1:]
+                             if versus_other(x) == Resolution.TRANSLATE]
+            transfer += new_transfers
+
+            # Remove any offices that have been transferred away from this day,
+            # and also any that are omitted in occurrence with the winner.
+            offices = [offices[0]] + [x for x in offices[1:]
+                                      if (x not in new_transfers and
+                                          versus_other(x) != Resolution.OMIT)]
+
+            if current >= start:
+                result.append(offices)
+            current += 1
+
+        return result
+
     def offices(self, date, calendar):
-        occurring = filter(lambda office: self.has_second_vespers(office, date),
-                           self.resolve_occurrence(date, calendar))
-        concurring = filter(lambda office: self.has_first_vespers(office, date),
-                            self.resolve_occurrence(date + 1, calendar))
-        occurring, concurring = list(occurring), list(concurring)
+        today, tomorrow = self.resolve_transfer(calendar, date, date + 1)
+        occurring = [office for office in today
+                     if self.has_second_vespers(office, date)]
+        concurring = [office for office in tomorrow
+                      if self.has_first_vespers(office, date + 1)]
 
         # Arbitrate between occurring and concurring.
         if occurring and concurring:
