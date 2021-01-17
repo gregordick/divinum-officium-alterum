@@ -28,11 +28,12 @@ class Vespers:
 
     def lookup(self, office, is_first, *items):
         base = [
-            'ad-i-vesperas' if is_first else 'ad-ii-vesperas',
-            'ad-vesperas',
+            ['ad-i-vesperas' if is_first else 'ad-ii-vesperas'],
+            ['ad-vesperas'],
+            [],
         ]
         return self._data_map.lookup(self.lookup_order(
-            office, ('%s/%s' % (b, item) for item in items for b in base)))
+            office, ('/'.join(b + [item]) for item in items for b in base)))
 
     def lookup_main(self, *items):
         return self.lookup(self._office, self._is_first, *items)

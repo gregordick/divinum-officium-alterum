@@ -1,16 +1,20 @@
 # XXX: This module still has scars from the time when it tried to manage the
 # keys for the various office-parts.
 
-import enum
-
 from .util import roman
 
 
-class Rite(enum.Enum):
+class Rite:
     SIMPLE = 0
     SEMIDOUBLE = 1
     DOUBLE = 2
     GREATER_DOUBLE = 3
+
+
+class Standing:
+    LESSER = 0
+    GREATER = 1
+    GREATER_PRIVILEGED = 2
 
 
 class Office:
@@ -42,28 +46,34 @@ class Office:
     @property
     def rite(self):
         return {
-            'duplex majus': Rite.GREATER_DOUBLE,
+            'duplex maius': Rite.GREATER_DOUBLE,
             'duplex': Rite.DOUBLE,
             'semiduplex': Rite.SEMIDOUBLE,
             'simplex': Rite.SIMPLE,
-        }[self.desc['ritus']]
+        }[self.desc['ritus'].replace('j', 'i')]
 
     @property
     def key(self):
         return self.desc.get('titulus')
 
+    @property
+    def standing(self):
+        return {
+            'maior privilegiata': Standing.GREATER_PRIVILEGED,
+            'maior': Standing.GREATER,
+            'minor': Standing.LESSER,
+        }[self.desc.get('status', 'minor').replace('j', 'i')]
 
-class ProperOfficeMixin:
-    def __init__(self, desc):
-        super().__init__(desc)
-        self._root = 'proprium/%s' % (desc['titulus'],)
+    @property
+    def octave_order(self):
+        # XXX: There should be an intermedite human-ish layer here, as for the
+        # other things above.  Note that we synthesise a descriptor containing
+        # the octavae_ordo field in at least one place, so fix that/those up
+        # too.
+        return int(self.desc.get('octavae_ordo', 6))
 
-    def title(self):
-        # XXX:
-        return self._root
 
-
-class Feast(ProperOfficeMixin, Office):
+class Feast(Office):
     @property
     def of_the_lord(self):
         return False
@@ -106,7 +116,12 @@ class BVMOnSaturday(Feast): pass
 
 class Vigil(Office): pass
 
+class SeptuagesimatideFeria(Feria): pass
+class SeptuagesimatideSunday(Sunday): pass
 class LentenFeria(Feria): pass
+class LentenSunday(Sunday): pass
+class PassiontideFeria(LentenFeria): pass
+class PassiontideSunday(LentenSunday): pass
 
 class WithinOctave(Office): pass
 class OctaveDay(Office): pass

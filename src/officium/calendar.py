@@ -271,35 +271,77 @@ class CalendarResolver(ABC):
         return calpoints
 
     @classmethod
+    def season(cls, calpoint_season, week, day):
+        if calpoint_season == 'Quadp':
+            # XXX: Ash Wednesday and the following three days don't behave like
+            # Lenten days in all respects, so some care will be needed here.
+            # Maybe fix them up in the calendar?
+            if week == 3 and day >= 3:
+                return 'quad'
+            return 'septuagesimae'
+        if calpoint_season == 'Quad' and week >= 5:
+            return 'passionis'
+        return calpoint_season.lower()
+
+    @classmethod
     def default_descriptor(cls, calpoint):
         desc = {
-            'qualitas': 'festum',
-            'ritus': 'duplex',
             'titulus': calpoint,
         }
         # TODO: Use named groups here.
         m = re.match(r'(Pent|Adv|Nat|Epi|Quadp|Quad|Pasc)(\d+)-([0-6])$',
                      calpoint)
         if m:
-            desc['tempus'] = m.group(1).lower()
-            desc['hebdomada'] = int(m.group(2))
-            day = int(m.group(3))
+            calpoint_season, week, day = (m.group(1), int(m.group(2)),
+                                          int(m.group(3)))
+            desc['tempus'] = cls.season(calpoint_season, week, day)
+            desc['hebdomada'] = week
+            if desc['tempus'] in ['quad', 'passionis']:
+                desc['status'] = 'major'
             if day == 0:
                 desc['qualitas'] = 'dominica'
+                desc['ritus'] = 'semiduplex'
             else:
                 desc['qualitas'] = 'feria'
                 desc['feria'] = day
+                desc['ritus'] = 'simplex'
             return desc
         else:
             return None
 
+    @classmethod
+    def base_calendar(cls):
+        return {
+            'calendarium/%s' % (calpoint,): [cls.default_descriptor(calpoint)]
+            for calpoint in itertools.chain(
+                ('Adv%d-%d' % (week, day)
+                 for week in range(1, 5) for day in range(7)),
+                ('Epi%d-%d' % (week, day)
+                 for week in range(1, 7) for day in range(7)),
+                ('Quadp%d-%d' % (week, day)
+                 for week in range(1, 4) for day in range(7)),
+                ('Quad%d-%d' % (week, day)
+                 for week in range(1, 7) for day in range(7)),
+                ('Pasc%d-%d' % (week, day)
+                 for week in range(1, 9) for day in range(7)),
+                ('Pent%d-%d' % (week, day)
+                 for week in range(1, 25) for day in range(7)),
+            )
+        }
+
     sunday_classes = {
         'adv': offices.AdventSunday,
         'pent': offices.SundayAfterPentecost,
+        'septuagesimae': offices.SeptuagesimatideSunday,
+        'quad': offices.LentenSunday,
+        'passionis': offices.PassiontideSunday,
     }
 
     feria_classes = {
         'adv': offices.AdventFeria,
+        'septuagesimae': offices.SeptuagesimatideFeria,
+        'quad': offices.LentenFeria,
+        'passionis': offices.PassiontideFeria,
     }
 
     @classmethod
@@ -328,10 +370,7 @@ class CalendarResolver(ABC):
     def calpoint_offices(self, calpoint):
         calentry = 'calendarium/%s' % (calpoint,)
         default_desc = self.default_descriptor(calpoint)
-        defaults = []
-        if default_desc is not None:
-            defaults.append(default_desc)
-        descriptors = self._data_map.get(calentry, defaults)
+        descriptors = self._data_map.get(calentry, [])
         office_list = []
         for descriptor in descriptors:
             if default_desc is not None:
@@ -403,7 +442,7 @@ class CalendarResolver(ABC):
             end_delta = end - self._resolve_transfer_cache_base
             if (start_delta >= 0 and
                 end_delta - start_delta < len(self._resolve_transfer_cache)):
-                return self._resolve_transfer_cache[start_delta:end_delta + 1]
+                return [list(x) for x in self._resolve_transfer_cache[start_delta:end_delta + 1]]
 
         # Offices can be transferred by up to a year, so start from a year ago.
         current = start - 366
@@ -427,13 +466,19 @@ class CalendarResolver(ABC):
                 return resolution
             new_transfers = [x for x in offices[1:]
                              if versus_other(x) == Resolution.TRANSLATE]
-            transfer += new_transfers
+            if new_transfers:
+                transfer += new_transfers
 
             # Remove any offices that have been transferred away from this day,
             # and also any that are omitted in occurrence with the winner.
             offices = [offices[0]] + [x for x in offices[1:]
-                                      if (x not in new_transfers and
-                                          versus_other(x) != Resolution.OMIT)]
+                                      if x not in new_transfers]
+
+            # Note that at this point we do _not_ filter out any offices that
+            # will be omitted in occurrence.  This is because this is not
+            # well-defined until we fix the hour: for example, a feria can
+            # reappear at Vespers after having been omitted during the office
+            # of an occurring simple feast.
 
             if current >= start:
                 result.append(offices)
@@ -443,10 +488,23 @@ class CalendarResolver(ABC):
 
     def offices(self, date):
         today, tomorrow = self.resolve_transfer(date, date + 1)
+
+        # Find evening offices.
         occurring = [office for office in today
                      if self.has_second_vespers(office, date)]
         concurring = [office for office in tomorrow
                       if self.has_first_vespers(office, date + 1)]
+
+        assert occurring or concurring, (date, today, tomorrow)
+
+        # Filter out omitted offices.
+        for offices in [today, tomorrow, occurring, concurring]:
+            if offices:
+                offices[:] = [offices[0]] + [
+                    office for office in offices[1:]
+                    if self.occurrence_resolution(offices[0], office)[1] !=
+                    Resolution.OMIT
+                ]
 
         # Arbitrate between occurring and concurring.
         if occurring and concurring:
