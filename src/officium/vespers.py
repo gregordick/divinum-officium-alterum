@@ -44,19 +44,21 @@ class Vespers:
         antiphons = self.lookup_main('antiphonae')
         psalms = self.lookup_main('psalmi')
         psalms = self._data_map[psalms]
-        yield parts.Group(
-            parts.PsalmishWithAntiphon('{}/{}'.format(antiphons, n), psalms)
-            for (n, psalms) in enumerate(psalms)
-        )
+        yield parts.Psalmody(antiphons, psalms)
 
-        yield parts.Chapter([parts.Text(self.lookup_main('capitulum'))])
-        # XXX: Not just Text here.
-        yield parts.Hymn([parts.Text(self.lookup_main('hymnus'))])
+        yield parts.StructuredLookup(self.lookup_main('capitulum'),
+                                     parts.Chapter)
+        yield parts.StructuredLookup(self.lookup_main('hymnus'),
+                                     parts.Hymn)
         versicle_pair = self.lookup_main('versiculum')
-        yield parts.Versicle([parts.Text(versicle_pair + '/0')])
-        yield parts.VersicleResponse([parts.Text(versicle_pair + '/1')])
+        # XXX: Extend StructuredLookup to take a richer implicit structure,
+        # so that it can convert a two-element list into a versicle and a
+        # response.
+        yield parts.StructuredLookup(versicle_pair + '/0', parts.Versicle)
+        yield parts.StructuredLookup(versicle_pair + '/1', parts.VersicleResponse)
 
-        mag_ant = self.lookup_main('ad-magnificat')
+        path = self.lookup_main('ad-magnificat')
+        mag_ant = parts.StructuredLookup(path, parts.Antiphon)
         # XXX: Slashes.
         yield parts.PsalmishWithAntiphon(mag_ant,
                                          ['psalterium/ad-vesperas/magnificat'])
@@ -64,7 +66,7 @@ class Vespers:
         # Oration.
         yield parts.Group([
             parts.dominus_vobiscum(),
-            parts.Oration([parts.Text(self.lookup_main('oratio'))]),
+            parts.StructuredLookup(self.lookup_main('oratio'), parts.Oration),
         ])
 
         # Commemorations.
@@ -72,18 +74,22 @@ class Vespers:
             is_first = commem in self._concurring
             versicle_pair = self.lookup(commem, is_first, 'versiculum')
             yield parts.Group([
-                parts.Antiphon(self.lookup(commem, is_first, 'ad-magnificat')),
-                parts.Versicle([parts.Text(versicle_pair + '/0')]),
-                parts.VersicleResponse([parts.Text(versicle_pair + '/1')]),
-                parts.Oration([parts.Text(self.lookup(commem, is_first,
-                                                      'oratio'))]),
+                parts.StructuredLookup(self.lookup(commem, is_first,
+                                                   'ad-magnificat'),
+                                       parts.Antiphon),
+                parts.StructuredLookup(versicle_pair + '/0', parts.Versicle),
+                parts.StructuredLookup(versicle_pair + '/1', parts.VersicleResponse),
+                parts.StructuredLookup(self.lookup(commem, is_first, 'oratio'),
+                                       parts.Oration),
             ])
 
         # Conclusion.
         yield parts.Group([
             parts.dominus_vobiscum(),
-            parts.Versicle([parts.Text('versiculi/benedicamus-domino')]),
-            parts.VersicleResponse([parts.Text('versiculi/deo-gratias')]),
-            parts.Versicle([parts.Text('versiculi/fidelium-animae')]),
-            parts.VersicleResponse([parts.Text('versiculi/amen')]),
+            parts.StructuredLookup('versiculi/benedicamus-domino',
+                                   parts.Versicle),
+            parts.StructuredLookup('versiculi/deo-gratias',
+                                   parts.VersicleResponse),
+            parts.StructuredLookup('versiculi/fidelium-animae', parts.Versicle),
+            parts.StructuredLookup('versiculi/amen', parts.VersicleResponse),
         ])

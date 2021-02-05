@@ -1,4 +1,6 @@
 class Group:
+    child_default = str
+
     def __init__(self, contents):
         self.contents = contents
 
@@ -7,21 +9,73 @@ class Group:
             yield content
 
 
-class Text:
-    def __init__(self, text):
-        self.text = text
-
-    def render(self):
-        return self.text
-
-
-class Antiphon(Text): pass
-
+class Antiphon(Group): pass
+class PsalmVerse(Group): pass
 class Chapter(Group): pass
 class Hymn(Group): pass
 class Versicle(Group): pass
 class VersicleResponse(Group): pass
 class Oration(Group): pass
+
+
+class DataValidationError(Exception):
+    pass
+
+
+class StructuredLookup:
+    # Classes that can be referred to by a label.
+    labelled_classes = {
+    }
+
+    def __init__(self, path, default_class=str):
+        self.path = path
+        self.default_class = default_class
+
+    def __repr__(self):
+        return '%s(%s, %s)' % (self.__class__.__name__, self.path,
+                               self.default_class.__name__)
+
+    def resolve(self, lang_data):
+        # XXX: Silently handle missing things by returning the raw path.
+        child = lang_data.get(self.path, self.path)
+        return self.build_renderable_list(self.default_class, child)
+
+    @classmethod
+    def build_renderable(cls, default_class, raw):
+        try:
+            [(key, value)] = raw.items()
+            try:
+                record_class = cls.labelled_classes[key]
+            except KeyError:
+                raise DataValidationError("Unrecognised type: %s" % (key,))
+        except ValueError:
+            # Too many/few keys.
+            raise DataValidationError("Must have exactly one key: %r" % (raw,))
+        except AttributeError:
+            # Not a dictionary.
+            record_class = default_class
+            value = raw
+
+        # XXX: record_class and record_arg are bad names.
+
+        if issubclass(record_class, Group):
+            # We're creating a Group, so we iterate to provide child-defaults.
+            record_arg = cls.build_renderable_list(record_class.child_default,
+                                                   value)
+        else:
+            record_arg = value
+
+        # We're not a Group.  Lists are not allowed.
+        if isinstance(value, list):
+            raise DataValidationError("List in non-Group context: %r" % (raw,))
+
+        return record_class(record_arg)
+
+    @classmethod
+    def build_renderable_list(cls, default_class, raw):
+        if not isinstance(raw, list):
+            raw = [raw]
+        return [cls.build_renderable(default_class, item) for item in raw]
 
 
 class PsalmishWithAntiphon:
@@ -31,24 +85,39 @@ class PsalmishWithAntiphon:
 
     def resolve(self):
         # XXX: Proper classes, Gloria.
-        yield Antiphon(self.antiphon)
+        yield self.antiphon
         for psalmish in self.psalmishes:
-            yield Text(psalmish)
-        yield Antiphon(self.antiphon)
+            yield StructuredLookup(psalmish, PsalmVerse)
+        yield self.antiphon
+
+
+class Psalmody:
+    def __init__(self, antiphons_path, psalms):
+        self.antiphons_path = antiphons_path
+        self.psalms = psalms
+
+    def resolve(self, lang_data):
+        lookup = StructuredLookup(self.antiphons_path, Antiphon)
+        antiphons = lookup.resolve(lang_data)
+        return [Group(
+            PsalmishWithAntiphon(antiphon, psalms)
+            for (antiphon, psalms) in zip(antiphons, self.psalms)
+        )]
 
 
 def deus_in_adjutorium():
     def generator():
-        yield Versicle([Text('versiculi/deus-in-adjutorium')])
-        yield VersicleResponse([Text('versiculi/domine-ad-adjuvandum')])
-        yield Text('versiculi/gloria-patri')
-        yield Text('versiculi/sicut-erat')
-        yield Text('versiculi/alleluja')
+        yield StructuredLookup('versiculi/deus-in-adjutorium', Versicle)
+        yield StructuredLookup('versiculi/domine-ad-adjuvandum',
+                               VersicleResponse)
+        yield StructuredLookup('versiculi/gloria-patri')
+        yield StructuredLookup('versiculi/sicut-erat')
+        yield StructuredLookup('versiculi/alleluja')
     return Group(generator())
 
 
 def dominus_vobiscum():
     def generator():
-        yield Versicle([Text('versiculi/dominus-vobiscum')])
-        yield VersicleResponse([Text('versiculi/et-cum-spiritu-tuo')])
+        yield StructuredLookup('versiculi/dominus-vobiscum', Versicle)
+        yield StructuredLookup('versiculi/et-cum-spiritu-tuo', VersicleResponse)
     return Group(generator())

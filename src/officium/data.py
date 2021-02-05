@@ -1,6 +1,6 @@
 class Data:
     def __init__(self, dictionary):
-        self.dictionary = dictionary
+        self.dictionary = dictionary.copy()
         self.redirections = {}
 
     def lookup(self, keys):
