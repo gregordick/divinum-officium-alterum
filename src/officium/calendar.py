@@ -47,8 +47,9 @@ class CalendarResolver(ABC):
     # for most versions, but can be overridden in others.
     NAT2_SUNDAY_LIMIT = 4
 
-    def __init__(self, data_map):
+    def __init__(self, data_map, index):
         self._data_map = data_map
+        self._index = index
 
         # XXX: Temporary crude cache to make regression tests faster.
         self._resolve_transfer_cache = None
@@ -538,6 +539,6 @@ class CalendarResolver(ABC):
         commemorations = self.resolve_commemorations(occurring_commem,
                                                      concurring_commem)
 
-        return [Vespers(date, self._data_map, office, concurring,
+        return [Vespers(date, self._data_map, self._index, office, concurring,
                         self.vespers_commem_filter(commemorations, date,
                                                    concurring))]

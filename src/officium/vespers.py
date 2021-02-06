@@ -2,9 +2,11 @@ from . import parts
 from . import util
 
 class Vespers:
-    def __init__(self, date, data_map, office, concurring, commemorations):
+    def __init__(self, date, generic_data, index, office, concurring,
+                 commemorations):
         self._date = date
-        self._data_map = data_map
+        self._generic_data = generic_data
+        self._index = index
         self._office = office
         self._is_first = office in concurring
 
@@ -32,7 +34,7 @@ class Vespers:
             ['ad-vesperas'],
             [],
         ]
-        return self._data_map.lookup(self.lookup_order(
+        return self._index.lookup(self.lookup_order(
             office, ('/'.join(b + [item]) for item in items for b in base)))
 
     def lookup_main(self, *items):
@@ -43,7 +45,7 @@ class Vespers:
 
         antiphons = self.lookup_main('antiphonae')
         psalms = self.lookup_main('psalmi')
-        psalms = self._data_map[psalms]
+        psalms = self._generic_data[psalms]
         yield parts.Psalmody(antiphons, psalms)
 
         yield parts.StructuredLookup(self.lookup_main('capitulum'),
