@@ -324,7 +324,7 @@ class CalendarResolver(ABC):
                 ('Quad%d-%d' % (week, day)
                  for week in range(1, 7) for day in range(7)),
                 ('Pasc%d-%d' % (week, day)
-                 for week in range(1, 9) for day in range(7)),
+                 for week in range(8) for day in range(7)),
                 ('Pent%d-%d' % (week, day)
                  for week in range(1, 25) for day in range(7)),
             )
