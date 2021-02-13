@@ -79,6 +79,8 @@ class Feast(Office):
         return False
 
 
+# XXX: Having TemporalOffice in the class hierarchy is wrong, because some
+# types of office (feasts, vigils, ...) can be temporal or sanctoral.
 class TemporalOffice(Office):
     @property
     def week_num(self):

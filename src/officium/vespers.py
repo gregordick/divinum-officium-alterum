@@ -1,3 +1,4 @@
+from . import offices
 from . import parts
 from . import util
 
@@ -19,6 +20,15 @@ class Vespers:
     def lookup_order(self, office, items):
         paths = [
             lambda item: 'proprium/%s/%s' % (office.key, item),
+        ]
+        # Fall back to propers from the preceding Sunday.  XXX: This is wrong,
+        # in two respects: firstly, it should be any non-Sunday temporal
+        # office, and not necessarily a feria; and secondly, slicing and dicing
+        # the key is in very poor taste.
+        if isinstance(office, offices.Feria):
+            sunday = office.key[:-1] + '0'
+            paths.append(lambda item: 'proprium/%s/%s' % (sunday, item))
+        paths += [
             lambda item: 'psalterium/%s/%s' % (util.day_ids[self._date.day_of_week],
                                                item),
             lambda item: 'psalterium/%s' % (item,),
