@@ -63,11 +63,7 @@ class Vespers:
         yield parts.StructuredLookup(self.lookup_main('hymnus'),
                                      parts.Hymn)
         versicle_pair = self.lookup_main('versiculum')
-        # XXX: Extend StructuredLookup to take a richer implicit structure,
-        # so that it can convert a two-element list into a versicle and a
-        # response.
-        yield parts.StructuredLookup(versicle_pair + '/0', parts.Versicle)
-        yield parts.StructuredLookup(versicle_pair + '/1', parts.VersicleResponse)
+        yield parts.StructuredLookup(versicle_pair, parts.VersicleWithResponse)
 
         path = self.lookup_main('ad-magnificat')
         mag_ant = parts.StructuredLookup(path, parts.Antiphon)
@@ -89,8 +85,8 @@ class Vespers:
                 parts.StructuredLookup(self.lookup(commem, is_first,
                                                    'ad-magnificat'),
                                        parts.Antiphon),
-                parts.StructuredLookup(versicle_pair + '/0', parts.Versicle),
-                parts.StructuredLookup(versicle_pair + '/1', parts.VersicleResponse),
+                parts.StructuredLookup(versicle_pair,
+                                       parts.VersicleWithResponse),
                 parts.StructuredLookup(self.lookup(commem, is_first, 'oratio'),
                                        parts.Oration),
             ])
@@ -98,10 +94,16 @@ class Vespers:
         # Conclusion.
         yield parts.Group([
             parts.dominus_vobiscum(),
-            parts.StructuredLookup('versiculi/benedicamus-domino',
-                                   parts.Versicle),
-            parts.StructuredLookup('versiculi/deo-gratias',
-                                   parts.VersicleResponse),
-            parts.StructuredLookup('versiculi/fidelium-animae', parts.Versicle),
-            parts.StructuredLookup('versiculi/amen', parts.VersicleResponse),
+            parts.VersicleWithResponse([
+                parts.StructuredLookup('versiculi/benedicamus-domino',
+                                       parts.Versicle),
+                parts.StructuredLookup('versiculi/deo-gratias',
+                                       parts.VersicleResponse),
+            ]),
+            parts.VersicleWithResponse([
+                parts.StructuredLookup('versiculi/fidelium-animae',
+                                       parts.Versicle),
+                parts.StructuredLookup('versiculi/amen',
+                                       parts.VersicleResponse),
+            ]),
         ])

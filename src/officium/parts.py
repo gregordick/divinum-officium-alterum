@@ -1,5 +1,8 @@
+import itertools
+
+
 class Group:
-    child_default = str
+    child_default = itertools.cycle([str])
 
     def __init__(self, contents):
         self.contents = contents
@@ -15,6 +18,8 @@ class Chapter(Group): pass
 class Hymn(Group): pass
 class Versicle(Group): pass
 class VersicleResponse(Group): pass
+class VersicleWithResponse(Group):
+    child_default = [Versicle, VersicleResponse]
 class Oration(Group): pass
 
 
@@ -27,9 +32,10 @@ class StructuredLookup:
     labelled_classes = {
     }
 
-    def __init__(self, path, default_class=str):
+    def __init__(self, path, default_class=str, list_root=False):
         self.path = path
         self.default_class = default_class
+        self.list_root = list_root
 
     def __repr__(self):
         return '%s(%s, %s)' % (self.__class__.__name__, self.path,
@@ -38,7 +44,11 @@ class StructuredLookup:
     def resolve(self, lang_data):
         # XXX: Silently handle missing things by returning the raw path.
         child = lang_data.get(self.path, self.path)
-        return self.build_renderable_list(self.default_class, child)
+        if self.list_root:
+            classes = itertools.cycle([self.default_class])
+            return self.build_renderable_list(classes, child)
+        else:
+            return [self.build_renderable(self.default_class, child)]
 
     @classmethod
     def build_renderable(cls, default_class, raw):
@@ -65,17 +75,19 @@ class StructuredLookup:
         else:
             record_arg = value
 
-        # We're not a Group.  Lists are not allowed.
-        if isinstance(value, list):
-            raise DataValidationError("List in non-Group context: %r" % (raw,))
+            # We're not a Group.  Lists are not allowed.
+            if isinstance(value, list):
+                raise DataValidationError("List in non-Group context %r: %r" %
+                                          (record_class, raw))
 
         return record_class(record_arg)
 
     @classmethod
-    def build_renderable_list(cls, default_class, raw):
+    def build_renderable_list(cls, default_classes, raw):
         if not isinstance(raw, list):
             raw = [raw]
-        return [cls.build_renderable(default_class, item) for item in raw]
+        return [cls.build_renderable(default_class, item)
+                for (item, default_class) in zip(raw, default_classes)]
 
 
 class PsalmishWithAntiphon:
@@ -97,7 +109,7 @@ class Psalmody:
         self.psalms = psalms
 
     def resolve(self, lang_data):
-        lookup = StructuredLookup(self.antiphons_path, Antiphon)
+        lookup = StructuredLookup(self.antiphons_path, Antiphon, list_root=True)
         antiphons = lookup.resolve(lang_data)
         return [Group(
             PsalmishWithAntiphon(antiphon, psalms)
@@ -107,9 +119,11 @@ class Psalmody:
 
 def deus_in_adjutorium():
     def generator():
-        yield StructuredLookup('versiculi/deus-in-adjutorium', Versicle)
-        yield StructuredLookup('versiculi/domine-ad-adjuvandum',
-                               VersicleResponse)
+        yield VersicleWithResponse([
+            StructuredLookup('versiculi/deus-in-adjutorium', Versicle),
+            StructuredLookup('versiculi/domine-ad-adjuvandum',
+                             VersicleResponse),
+        ])
         yield StructuredLookup('versiculi/gloria-patri')
         yield StructuredLookup('versiculi/sicut-erat')
         yield StructuredLookup('versiculi/alleluja')
@@ -120,4 +134,4 @@ def dominus_vobiscum():
     def generator():
         yield StructuredLookup('versiculi/dominus-vobiscum', Versicle)
         yield StructuredLookup('versiculi/et-cum-spiritu-tuo', VersicleResponse)
-    return Group(generator())
+    return VersicleWithResponse(generator())
