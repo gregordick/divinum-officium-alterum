@@ -48,6 +48,7 @@ class Data:
         for prefix_len in range(len(components), 0, -1):
             prefix = '/'.join(components[0:prefix_len])
             if prefix in self.redirections:
-                yield '/'.join([self.redirections[prefix]] +
-                               components[prefix_len:])
+                redirected_path = '/'.join([self.redirections[prefix]] +
+                                           components[prefix_len:])
+                yield from self.gen_redirections(redirected_path)
 
