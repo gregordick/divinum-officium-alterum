@@ -3,11 +3,12 @@ from . import parts
 from . import util
 
 class Vespers:
-    def __init__(self, date, generic_data, index, office, concurring,
-                 commemorations):
+    def __init__(self, date, generic_data, index, calendar_resolver, office,
+                 concurring, commemorations):
         self._date = date
         self._generic_data = generic_data
         self._index = index
+        self._calendar_resolver = calendar_resolver
         self._office = office
         self._is_first = office in concurring
 
@@ -52,7 +53,9 @@ class Vespers:
         return self.lookup(self._office, self._is_first, *items)
 
     def resolve(self):
-        yield parts.deus_in_adjutorium()
+        easter = self._calendar_resolver.easter_sunday(self._date.year)
+        alleluia = not (easter - 7 * 9 <= self._date < easter)
+        yield parts.deus_in_adjutorium(alleluia)
 
         antiphons = self.lookup_main('antiphonae')
         psalms = self.lookup_main('psalmi')

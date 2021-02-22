@@ -117,7 +117,7 @@ class Psalmody:
         )]
 
 
-def deus_in_adjutorium():
+def deus_in_adjutorium(alleluia):
     def generator():
         yield VersicleWithResponse([
             StructuredLookup('versiculi/deus-in-adjutorium', Versicle),
@@ -126,7 +126,8 @@ def deus_in_adjutorium():
         ])
         yield StructuredLookup('versiculi/gloria-patri')
         yield StructuredLookup('versiculi/sicut-erat')
-        yield StructuredLookup('versiculi/alleluja')
+        yield StructuredLookup('versiculi/alleluja' if alleluia else
+                               'versiculi/laus-tibi-domine')
     return Group(generator())
 
 

@@ -539,6 +539,7 @@ class CalendarResolver(ABC):
         commemorations = self.resolve_commemorations(occurring_commem,
                                                      concurring_commem)
 
-        return [Vespers(date, self._data_map, self._index, office, concurring,
+        return [Vespers(date, self._data_map, self._index, self, office,
+                        concurring,
                         self.vespers_commem_filter(commemorations, date,
                                                    concurring))]
