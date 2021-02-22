@@ -18,6 +18,8 @@ class Standing:
 
 
 class Office:
+    extra_keys = []
+
     def __init__(self, desc):
         self.desc = dict(desc)
 
@@ -53,8 +55,8 @@ class Office:
         }[self.desc['ritus'].replace('j', 'i')]
 
     @property
-    def key(self):
-        return self.desc.get('titulus')
+    def keys(self):
+        return ['proprium/%s' % (self.desc.get('titulus'),)] + self.extra_keys
 
     @property
     def standing(self):
@@ -120,8 +122,22 @@ class Vigil(Office): pass
 
 class SeptuagesimatideFeria(Feria): pass
 class SeptuagesimatideSunday(Sunday): pass
-class LentenFeria(Feria): pass
-class LentenSunday(Sunday): pass
+
+class LentenFeria(Feria):
+    extra_keys = [
+        'proprium/de-tempore/quadragesima/in-feriis',
+        'proprium/de-tempore/quadragesima',
+    ]
+
+# For Ash Wednesday and the three following days.  XXX: This is a bit ugly.
+class EarlyLentenFeria(LentenFeria):
+    extra_keys = []
+
+class LentenSunday(Sunday):
+    extra_keys = [
+        'proprium/de-tempore/quadragesima',
+    ]
+
 class PassiontideFeria(LentenFeria): pass
 class PassiontideSunday(LentenSunday): pass
 
