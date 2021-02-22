@@ -73,9 +73,10 @@ class Vespers:
                                          ['psalterium/ad-vesperas/magnificat'])
 
         # Oration.
+        oration = self.lookup_main('oratio-super-populum', 'oratio')
         yield parts.Group([
             parts.dominus_vobiscum(),
-            parts.StructuredLookup(self.lookup_main('oratio'), parts.Oration),
+            parts.StructuredLookup(oration, parts.Oration),
         ])
 
         # Commemorations.
