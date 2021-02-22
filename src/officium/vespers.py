@@ -92,7 +92,9 @@ class Vespers:
                                        parts.Antiphon),
                 parts.StructuredLookup(versicle_pair,
                                        parts.VersicleWithResponse),
-                parts.StructuredLookup(self.lookup(commem, is_first, 'oratio'),
+                parts.StructuredLookup(self.lookup(commem, is_first,
+                                                   'oratio-super-populum',
+                                                   'oratio'),
                                        parts.Oration),
             ])
 
