@@ -133,6 +133,6 @@ def deus_in_adjutorium(alleluia):
 
 def dominus_vobiscum():
     def generator():
-        yield StructuredLookup('versiculi/dominus-vobiscum', Versicle)
-        yield StructuredLookup('versiculi/et-cum-spiritu-tuo', VersicleResponse)
+        yield StructuredLookup('versiculi/dominus-vobiscum',
+                               VersicleWithResponse)
     return VersicleWithResponse(generator())
