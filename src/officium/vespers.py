@@ -80,6 +80,7 @@ class Vespers:
         oration = self.lookup_main('oratio-super-populum', 'oratio')
         yield parts.Group([
             parts.dominus_vobiscum(),
+            parts.oremus(),
             parts.StructuredLookup(oration, parts.Oration),
         ])
 
@@ -93,6 +94,7 @@ class Vespers:
                                        parts.Antiphon),
                 parts.StructuredLookup(versicle_pair,
                                        parts.VersicleWithResponse),
+                parts.oremus(),
                 parts.StructuredLookup(self.lookup(commem, is_first,
                                                    'oratio-super-populum',
                                                    'oratio'),

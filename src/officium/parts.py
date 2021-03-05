@@ -32,7 +32,7 @@ class StructuredLookup:
     labelled_classes = {
     }
 
-    def __init__(self, path, default_class=str, list_root=False):
+    def __init__(self, path, default_class=Group, list_root=False):
         self.path = path
         self.default_class = default_class
         self.list_root = list_root
@@ -132,7 +132,8 @@ def deus_in_adjutorium(alleluia):
 
 
 def dominus_vobiscum():
-    def generator():
-        yield StructuredLookup('versiculi/dominus-vobiscum',
-                               VersicleWithResponse)
-    return VersicleWithResponse(generator())
+    return StructuredLookup('versiculi/dominus-vobiscum', VersicleWithResponse)
+
+
+def oremus():
+    return StructuredLookup('versiculi/oremus')
