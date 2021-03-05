@@ -59,7 +59,8 @@ class Vespers:
 
         antiphons = self.lookup_main('antiphonae')
         psalms = self.lookup_main('psalmi')
-        psalms = self._generic_data[psalms]
+        psalms = [['/'.join(['psalterium', path]) for path in paths]
+                  for paths in self._generic_data[psalms]]
         yield parts.Psalmody(antiphons, psalms)
 
         yield parts.StructuredLookup(self.lookup_main('capitulum'),
