@@ -1,5 +1,6 @@
 from . import offices
 from . import parts
+from . import psalmish
 from . import util
 
 class Vespers:
@@ -59,9 +60,7 @@ class Vespers:
 
         antiphons = self.lookup_main('antiphonae')
         psalms = self.lookup_main('psalmi')
-        psalms = [['/'.join(['psalterium', path]) for path in paths]
-                  for paths in self._generic_data[psalms]]
-        yield parts.Psalmody(antiphons, psalms)
+        yield parts.Psalmody(antiphons, self._generic_data[psalms])
 
         yield parts.StructuredLookup(self.lookup_main('capitulum'),
                                      parts.Chapter)
@@ -73,8 +72,8 @@ class Vespers:
         path = self.lookup_main('ad-magnificat')
         mag_ant = parts.StructuredLookup(path, parts.Antiphon)
         # XXX: Slashes.
-        yield parts.PsalmishWithAntiphon(mag_ant,
-                                         ['psalterium/ad-vesperas/magnificat'])
+        mag = psalmish.PsalmishWithGloria('ad-vesperas/magnificat')
+        yield parts.PsalmishWithAntiphon(mag_ant, [mag])
 
         # Oration.
         oration = self.lookup_main('oratio-super-populum', 'oratio')

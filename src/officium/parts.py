@@ -1,5 +1,7 @@
 import itertools
 
+from officium import data
+from officium.psalmish import descriptor_to_psalmish
 
 class Group:
     child_default = itertools.cycle([str])
@@ -21,10 +23,6 @@ class VersicleResponse(Group): pass
 class VersicleWithResponse(Group):
     child_default = [Versicle, VersicleResponse]
 class Oration(Group): pass
-
-
-class DataValidationError(Exception):
-    pass
 
 
 class StructuredLookup:
@@ -52,19 +50,8 @@ class StructuredLookup:
 
     @classmethod
     def build_renderable(cls, default_class, raw):
-        try:
-            [(key, value)] = raw.items()
-            try:
-                record_class = cls.labelled_classes[key]
-            except KeyError:
-                raise DataValidationError("Unrecognised type: %s" % (key,))
-        except ValueError:
-            # Too many/few keys.
-            raise DataValidationError("Must have exactly one key: %r" % (raw,))
-        except AttributeError:
-            # Not a dictionary.
-            record_class = default_class
-            value = raw
+        record_class, value = data.maybe_labelled(raw, cls.labelled_classes,
+                                                  default_class)
 
         # XXX: record_class and record_arg are bad names.
 
@@ -99,7 +86,10 @@ class PsalmishWithAntiphon:
         # XXX: Proper classes, Gloria.
         yield self.antiphon
         for psalmish in self.psalmishes:
-            yield StructuredLookup(psalmish, PsalmVerse)
+            yield StructuredLookup(psalmish.key, PsalmVerse)
+            if psalmish.gloria:
+                yield StructuredLookup('versiculi/gloria-patri-post-psalmum',
+                                       PsalmVerse, list_root=True)
         yield self.antiphon
 
 
@@ -112,7 +102,8 @@ class Psalmody:
         lookup = StructuredLookup(self.antiphons_path, Antiphon, list_root=True)
         antiphons = lookup.resolve(lang_data)
         return [Group(
-            PsalmishWithAntiphon(antiphon, psalms)
+            PsalmishWithAntiphon(antiphon, [descriptor_to_psalmish(psalm)
+                                            for psalm in psalms])
             for (antiphon, psalms) in zip(antiphons, self.psalms)
         )]
 

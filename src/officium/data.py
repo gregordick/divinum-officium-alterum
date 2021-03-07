@@ -1,3 +1,7 @@
+class DataValidationError(Exception):
+    pass
+
+
 class Data:
     def __init__(self, dictionary):
         self.dictionary = dictionary.copy()
@@ -52,3 +56,19 @@ class Data:
                                            components[prefix_len:])
                 yield from self.gen_redirections(redirected_path)
 
+
+def maybe_labelled(raw, labels, default_class):
+    try:
+        [(key, value)] = raw.items()
+        try:
+            cls = labels[key]
+        except KeyError:
+            raise DataValidationError("Unrecognised type: %s" % (key,))
+    except ValueError:
+        # Too many/few keys.
+        raise DataValidationError("Must have exactly one key: %r" % (raw,))
+    except AttributeError:
+        # Not a dictionary.
+        cls = default_class
+        value = raw
+    return cls, value
