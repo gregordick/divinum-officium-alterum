@@ -23,6 +23,7 @@ class VersicleResponse(Group): pass
 class VersicleWithResponse(Group):
     child_default = [Versicle, VersicleResponse]
 class Oration(Group): pass
+class OrationConclusion(Group): pass
 
 
 class StructuredLookup:
@@ -128,3 +129,13 @@ def dominus_vobiscum():
 
 def oremus():
     return StructuredLookup('versiculi/oremus')
+
+
+def amen():
+    return StructuredLookup('versiculi/amen', VersicleResponse)
+
+
+def oration_conclusion(oration_path, generic_data):
+    conclusion_base = generic_data['conclusions'].get(oration_path,
+                                                      'per-dominum')
+    return StructuredLookup(conclusion_base, OrationConclusion)

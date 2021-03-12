@@ -76,29 +76,38 @@ class Vespers:
         yield parts.PsalmishWithAntiphon(mag_ant, [mag])
 
         # Oration.
-        oration = self.lookup_main('oratio-super-populum', 'oratio')
+        oration_path = self.lookup_main('oratio-super-populum', 'oratio')
+        oration = parts.StructuredLookup(oration_path, parts.Oration)
         yield parts.Group([
             parts.dominus_vobiscum(),
             parts.oremus(),
-            parts.StructuredLookup(oration, parts.Oration),
+            oration,
+            parts.oration_conclusion(oration_path, self._generic_data),
+            parts.amen(),
         ])
 
         # Commemorations.
-        for commem in self._commemorations:
+        for i, commem in enumerate(self._commemorations):
             is_first = commem in self._concurring
             versicle_pair = self.lookup(commem, is_first, 'versiculum')
-            yield parts.Group([
+            oration_path = self.lookup(commem, is_first,
+                                       'oratio-super-populum', 'oratio')
+            part_list = [
                 parts.StructuredLookup(self.lookup(commem, is_first,
                                                    'ad-magnificat'),
                                        parts.Antiphon),
                 parts.StructuredLookup(versicle_pair,
                                        parts.VersicleWithResponse),
                 parts.oremus(),
-                parts.StructuredLookup(self.lookup(commem, is_first,
-                                                   'oratio-super-populum',
-                                                   'oratio'),
-                                       parts.Oration),
-            ])
+                parts.StructuredLookup(oration_path, parts.Oration),
+            ]
+            # Only the last commemoration gets the conclusion.
+            if i == len(self._commemorations) - 1:
+                part_list += [
+                    parts.oration_conclusion(oration_path, self._generic_data),
+                    parts.amen(),
+                ]
+            yield parts.Group(part_list)
 
         # Conclusion.
         yield parts.Group([
