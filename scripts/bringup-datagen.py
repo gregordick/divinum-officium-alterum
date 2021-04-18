@@ -15,7 +15,7 @@ import yaml
 
 from officium import util
 
-import bringup
+from officium import bringup
 
 
 def make_descriptor(key, calcalc_lines):
