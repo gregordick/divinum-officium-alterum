@@ -370,7 +370,7 @@ def merge_do_propers(propers, redirections, do_redirections, generic,
         return False
     for (do_key, value) in do_propers.items():
         if do_key == 'Rank':
-            m = re.search(r'(ex|vide) (C\d+)\s*$', do_propers[do_key][0])
+            m = re.search(r'(ex|vide) (C.*)\b\s*$', do_propers[do_key][0])
             if m:
                 assert out_key_base
                 redirections[out_key_base] = 'commune/' + m.group(2)
@@ -466,7 +466,8 @@ def propers(calendar, options):
         out_key_base = 'proprium/%s' % (descs[0].get('titulus', calpoint),)
         merge()
 
-    for common in ("C%d" % (n,) for n in range(1,12)):
+    for common in (key[8:] for key in redirections.values()
+                   if key.startswith('commune/')):
         do_basename = os.path.join('Commune', common)
         out_key_base = 'commune/%s' % (common,)
         merge()
