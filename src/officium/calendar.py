@@ -362,6 +362,8 @@ class CalendarResolver(ABC):
             return offices.OctaveDay
         elif desc['qualitas'] == 'vigilia':
             return offices.Vigil
+        elif desc['qualitas'] == 'officium sanctae mariae in sabbato':
+            return offices.BVMOnSaturday
         assert False, desc['qualitas']
 
     @classmethod

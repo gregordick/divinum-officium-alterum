@@ -13,9 +13,9 @@ import sys
 
 import yaml
 
-from officium import util
-
 from officium import bringup
+from officium import calendar
+from officium import util
 
 
 def make_descriptor(key, calcalc_lines):
@@ -55,7 +55,9 @@ def make_descriptor(key, calcalc_lines):
         else:
             desc['ritus'] = 'simplex'
 
-        if rankline.startswith('Festum'):
+        if key.endswith(calendar.BVM_SATURDAY_CALPOINT):
+            desc['qualitas'] = 'officium sanctae mariae in sabbato'
+        elif rankline.startswith('Festum'):
             desc['qualitas'] = 'festum'
         elif rankline.startswith('Dominica'):
             desc['qualitas'] = 'dominica'
@@ -165,7 +167,7 @@ def parse(filename, options):
         return _parse(f, options)
 
 
-def calendar(raw):
+def make_calendar(raw):
     d = {
         'calendarium/' + k: list(make_descriptors('calendarium/' + k, v))
         for (k, v) in raw.items()
@@ -439,7 +441,7 @@ def post_process(propers, key):
     del propers[key]
 
 
-def propers(calendar, options):
+def propers(calendar_data, options):
     propers = {}
     generic = {}
     redirections = {}
@@ -454,7 +456,7 @@ def propers(calendar, options):
         return merge_do_propers(propers, redirections, do_redirections, generic,
                                 do_propers_base, do_basename, out_key_base, options)
 
-    for (entry, descs) in calendar.dictionary.items():
+    for (entry, descs) in calendar_data.dictionary.items():
         if not entry.startswith('calendarium/'):
             continue
         calpoint = entry[len('calendarium/'):]
@@ -565,7 +567,7 @@ def main(options):
     out = parse(options.datafile, options)
 
     if options.format != 'raw':
-        out = calendar(out)
+        out = make_calendar(out)
         from_propers = propers(bringup.make_generic('rubricarum', out), options)
         if options.format == 'propers':
             out = from_propers
