@@ -124,7 +124,8 @@ class PsalmishWithAntiphon:
             else:
                 key = psalmish.key
                 the_filter = None
-            yield StructuredLookup(key, PsalmVerse, raw_filter=the_filter)
+            yield StructuredLookup(key, PsalmVerse, list_root=True,
+                                   raw_filter=the_filter)
             if psalmish.gloria:
                 yield StructuredLookup('versiculi/gloria-patri-post-psalmum',
                                        PsalmVerse, list_root=True)
