@@ -124,7 +124,7 @@ def _parse(f, options):
         line = line.rstrip()
 
         if line.endswith('~'):
-            accumulator += line[:-1]
+            accumulator += line[:-1] + ' '
             continue
 
         if re.match(r'[(].*[)]$', line):
