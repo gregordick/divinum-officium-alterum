@@ -6,9 +6,9 @@ from officium.divino.calendar import CalendarResolverDA
 from officium.rubricarum.calendar import CalendarResolver1962
 
 
-def render(things, data, do_render, cb):
+def render(things, data, do_render, cb, ctx=None):
     for thing in things:
-        cb(thing)
+        child_ctx = cb(thing, ctx)
         if not isinstance(thing, str):
             try:
                 children = thing.resolve()
@@ -16,9 +16,9 @@ def render(things, data, do_render, cb):
                 if do_render:
                     children = thing.resolve(data)
                 else:
-                    cb(repr(thing))
+                    cb(repr(thing), child_ctx)
                     continue
-            render(children, data, do_render, cb)
+            render(children, data, do_render, cb, child_ctx)
 
 
 resolvers = {

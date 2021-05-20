@@ -8,7 +8,7 @@ from officium.bringup import bringup_components, make_date, render, resolvers
 from officium.parts import Antiphon, StructuredLookup, Versicle, VersicleResponse, Psalmody
 
 
-def render_callback(thing):
+def render_callback(thing, ctx):
     if isinstance(thing, Antiphon):
         print("Ant. ", end='')
     if isinstance(thing, Versicle):
