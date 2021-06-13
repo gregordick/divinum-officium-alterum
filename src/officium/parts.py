@@ -6,19 +6,34 @@ from officium.psalmish import descriptor_to_psalmish
 
 class Group:
     child_default = itertools.cycle([str])
+    _title = None
 
-    def __init__(self, contents):
+    def __init__(self, contents, **meta):
         self.contents = contents
+        self.meta = meta
 
     def resolve(self):
         for content in self.contents:
             yield content
 
+    @property
+    def title(self):
+        pass
+
+    @property
+    def scripture_ref(self):
+        return self.meta.get('scripture_ref')
+
 
 class Antiphon(Group): pass
 class PsalmVerse(Group): pass
 class Chapter(Group): pass
-class Hymn(Group): pass
+class HymnLine(Group): pass
+class HymnVerse(Group):
+    child_default = itertools.cycle([HymnLine])
+class Hymn(Group):
+    child_default = itertools.cycle([HymnVerse])
+    title = 'hymnus'
 class Versicle(Group): pass
 class VersicleResponse(Group): pass
 class VersicleWithResponse(Group):
@@ -60,24 +75,29 @@ class StructuredLookup:
 
     @classmethod
     def build_renderable(cls, default_class, raw):
-        record_class, value = data.maybe_labelled(raw, cls.labelled_classes,
-                                                  default_class)
+        record_class, value, meta = data.maybe_labelled(raw,
+                                                        cls.labelled_classes,
+                                                        default_class)
 
         # XXX: record_class and record_arg are bad names.
 
         if issubclass(record_class, Group):
             # We're creating a Group, so we iterate to provide child-defaults.
-            record_arg = cls.build_renderable_list(record_class.child_default,
-                                                   value)
+            children = cls.build_renderable_list(record_class.child_default,
+                                                 value)
+            return record_class(children, **meta)
         else:
-            record_arg = value
-
             # We're not a Group.  Lists are not allowed.
             if isinstance(value, list):
                 raise DataValidationError("List in non-Group context %r: %r" %
                                           (record_class, raw))
+            if meta:
+                raise DataValidationError("Meta in non-Group context %r: %r" %
+                                          (record_class, raw))
 
-        return record_class(record_arg)
+            return record_class(value)
+
+        assert False, "Unreachable"
 
     @classmethod
     def build_renderable_list(cls, default_classes, raw):

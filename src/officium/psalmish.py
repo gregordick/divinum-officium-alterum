@@ -25,5 +25,5 @@ labels = {
     'sine gloria': PsalmishWithoutGloria
 }
 def descriptor_to_psalmish(descriptor, default_class=PsalmishWithGloria):
-    cls, arg = data.maybe_labelled(descriptor, labels, default_class)
-    return cls(arg)
+    cls, arg, meta = data.maybe_labelled(descriptor, labels, default_class)
+    return cls(arg, **meta)

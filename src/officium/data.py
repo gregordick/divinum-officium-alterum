@@ -58,17 +58,21 @@ class Data:
 
 
 def maybe_labelled(raw, labels, default_class):
-    try:
-        [(key, value)] = raw.items()
+    meta = {}
+    cls = default_class
+    if isinstance(raw, dict):
         try:
-            cls = labels[key]
+            meta = dict(raw)
+            value = meta.pop('content')
         except KeyError:
-            raise DataValidationError("Unrecognised type: %s" % (key,))
-    except ValueError:
-        # Too many/few keys.
-        raise DataValidationError("Must have exactly one key: %r" % (raw,))
-    except AttributeError:
+            raise DataValidationError("No content: %r" % (raw,))
+        if 'type' in meta:
+            try:
+                key = meta.pop('type')
+                cls = labels[key]
+            except KeyError:
+                raise DataValidationError("Unrecognised type: %s" % (key,))
+    else:
         # Not a dictionary.
-        cls = default_class
         value = raw
-    return cls, value
+    return cls, value, meta

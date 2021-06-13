@@ -402,6 +402,23 @@ def merge_do_propers(propers, redirections, do_redirections, generic,
                     except ValueError:
                         # Some or all entries were missing psalms.
                         pass
+                elif out_path.endswith('/hymnus'):
+                    verse = []
+                    verses = [verse]
+                    for line in value:
+                        if line.strip() == '_':
+                            verse = []
+                            verses.append(verse)
+                        else:
+                            line = re.sub(r'^([{].*[}])?(v[.]\s*)?', '', line)
+                            verse.append(line)
+                    value = verses
+                elif out_path.endswith('/capitulum'):
+                    if value and value[0].startswith('!'):
+                        value = {
+                            'scripture_ref': re.sub(r'^!\s*', '', value[0]),
+                            'content': value[1:]
+                        }
                 propers[out_path] = value
     return True
 
@@ -502,7 +519,7 @@ def propers(calendar_data, options):
     }
     generic['conclusions'] = {}
     for key, value in propers.items():
-        if value and value[-1].startswith('$'):
+        if value and isinstance(value, list) and isinstance(value[-1], str) and value[-1].startswith('$'):
             ref = value.pop()[1:].strip().lower().replace('j', 'i').replace('eumdem', 'eundem')
             if ref in known_conclusions:
                 generic['conclusions'][key] = ref.replace(' ', '-')
