@@ -16,6 +16,10 @@ class Group:
         for content in self.contents:
             yield content
 
+    @classmethod
+    def transform(cls, contents, lang_data):
+        return contents
+
     @property
     def title(self):
         pass
@@ -25,7 +29,30 @@ class Group:
         return self.meta.get('scripture_ref')
 
 
+class SingleAlleluiaMixin:
+    @classmethod
+    def ensure_alleluia(cls, text, lang_data):
+        # XXX: The reachings into lang_data should be encapsulated away
+        # somewhere, and the compiled result cached, too.
+        pattern = re.compile(r'\W*' + lang_data['formula-alleluia-simplicis'] +
+                             r'\W*$')
+        if not re.search(pattern, text):
+            text = re.sub(r'\W*$', lang_data['alleluia-simplex'][0], text,
+                          count=1)
+        return text
+
+    @classmethod
+    def transform(cls, contents, lang_data):
+        # Transform the final element to ensure that it ends with "alleluia".
+        contents = list(contents)
+        indices = [i for (i, x) in enumerate(contents) if isinstance(x, str)]
+        if indices:
+            contents[indices[-1]] = cls.ensure_alleluia(contents[indices[-1]],
+                                                        lang_data)
+        return contents
+
 class Antiphon(Group): pass
+class AntiphonWithAlleluia(SingleAlleluiaMixin, Antiphon): pass
 class PsalmVerse(Group): pass
 class Chapter(Group): pass
 class HymnLine(Group): pass
@@ -35,9 +62,13 @@ class Hymn(Group):
     child_default = itertools.cycle([HymnVerse])
     title = 'hymnus'
 class Versicle(Group): pass
+class VersicleWithAlleluia(SingleAlleluiaMixin, Versicle): pass
 class VersicleResponse(Group): pass
+class VersicleResponseWithAlleluia(SingleAlleluiaMixin, VersicleResponse): pass
 class VersicleWithResponse(Group):
     child_default = [Versicle, VersicleResponse]
+class VersicleWithResponseWithAlleluia(Group):
+    child_default = [VersicleWithAlleluia, VersicleResponseWithAlleluia]
 class Oration(Group): pass
 class OrationConclusion(Group): pass
 
@@ -69,12 +100,12 @@ class StructuredLookup:
         child = self.lookup_raw(lang_data)
         if self.list_root:
             classes = itertools.cycle([self.default_class])
-            return self.build_renderable_list(classes, child)
+            return self.build_renderable_list(classes, child, lang_data)
         else:
-            return [self.build_renderable(self.default_class, child)]
+            return [self.build_renderable(self.default_class, child, lang_data)]
 
     @classmethod
-    def build_renderable(cls, default_class, raw):
+    def build_renderable(cls, default_class, raw, lang_data):
         record_class, value, meta = data.maybe_labelled(raw,
                                                         cls.labelled_classes,
                                                         default_class)
@@ -84,7 +115,8 @@ class StructuredLookup:
         if issubclass(record_class, Group):
             # We're creating a Group, so we iterate to provide child-defaults.
             children = cls.build_renderable_list(record_class.child_default,
-                                                 value)
+                                                 value, lang_data)
+            children = record_class.transform(children, lang_data)
             return record_class(children, **meta)
         else:
             # We're not a Group.  Lists are not allowed.
@@ -100,10 +132,10 @@ class StructuredLookup:
         assert False, "Unreachable"
 
     @classmethod
-    def build_renderable_list(cls, default_classes, raw):
+    def build_renderable_list(cls, default_classes, raw, lang_data):
         if not isinstance(raw, list):
             raw = [raw]
-        return [cls.build_renderable(default_class, item)
+        return [cls.build_renderable(default_class, item, lang_data)
                 for (item, default_class) in zip(raw, default_classes)]
 
 
@@ -153,12 +185,14 @@ class PsalmishWithAntiphon:
 
 
 class Psalmody:
-    def __init__(self, antiphons_path, psalms):
+    def __init__(self, antiphons_path, psalms, antiphon_class=Antiphon):
         self.antiphons_path = antiphons_path
+        self.antiphon_class = antiphon_class
         self.psalms = psalms
 
     def resolve(self, lang_data):
-        lookup = StructuredLookup(self.antiphons_path, Antiphon, list_root=True)
+        lookup = StructuredLookup(self.antiphons_path, self.antiphon_class,
+                                  list_root=True)
         antiphons = lookup.resolve(lang_data)
         return [Group(
             PsalmishWithAntiphon(antiphon, [descriptor_to_psalmish(psalm)

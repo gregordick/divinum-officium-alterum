@@ -54,23 +54,35 @@ class Vespers:
         return self.lookup(self._office, self._is_first, *items)
 
     def resolve(self):
+        # XXX: Information about the season should come with the offices for the
+        # day.  Also, take care about the boundaries.
         easter = self._calendar_resolver.easter_sunday(self._date.year)
-        alleluia = not (easter - 7 * 9 <= self._date < easter)
+        alleluia = not (easter - 7 * 9 <= self._date < easter - 1)
+        eastertide = easter <= self._date < easter + 8 * 7 - 1
+
+        if eastertide:
+            antiphon_class = parts.AntiphonWithAlleluia
+            vr_class = parts.VersicleWithResponseWithAlleluia
+        else:
+            antiphon_class = parts.Antiphon
+            vr_class = parts.VersicleWithResponse
+
         yield parts.deus_in_adjutorium(alleluia)
 
         antiphons = self.lookup_main('antiphonae')
         psalms = self.lookup_main('psalmi')
-        yield parts.Psalmody(antiphons, self._generic_data[psalms])
+        yield parts.Psalmody(antiphons, self._generic_data[psalms],
+                             antiphon_class)
 
         yield parts.StructuredLookup(self.lookup_main('capitulum'),
                                      parts.Chapter)
         yield parts.StructuredLookup(self.lookup_main('hymnus'),
                                      parts.Hymn)
         versicle_pair = self.lookup_main('versiculum')
-        yield parts.StructuredLookup(versicle_pair, parts.VersicleWithResponse)
+        yield parts.StructuredLookup(versicle_pair, vr_class)
 
         path = self.lookup_main('ad-magnificat')
-        mag_ant = parts.StructuredLookup(path, parts.Antiphon)
+        mag_ant = parts.StructuredLookup(path, antiphon_class)
         # XXX: Slashes.
         mag = psalmish.PsalmishWithGloria('ad-vesperas/magnificat')
         yield parts.PsalmishWithAntiphon(mag_ant, [mag])
@@ -95,9 +107,8 @@ class Vespers:
             part_list = [
                 parts.StructuredLookup(self.lookup(commem, is_first,
                                                    'ad-magnificat'),
-                                       parts.Antiphon),
-                parts.StructuredLookup(versicle_pair,
-                                       parts.VersicleWithResponse),
+                                       antiphon_class),
+                parts.StructuredLookup(versicle_pair, vr_class),
                 parts.oremus(),
                 parts.StructuredLookup(oration_path, parts.Oration),
             ]

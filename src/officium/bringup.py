@@ -65,6 +65,7 @@ def make_latin(raw_latin):
         'versiculi/sicut-erat': 'Sicut erat in princípio, et nunc, et semper, et in sǽcula sæculórum.  Amen.',
         'versiculi/alleluja': 'Allelúja.',
         'versiculi/laus-tibi-domine': 'Laus tibi, Dómine, Rex ætérnæ glóriæ.',
+        'formula-alleluia-simplicis': 'allel[uú][ij]a',
     }
 
     data = make_data(latin)
