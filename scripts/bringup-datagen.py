@@ -503,6 +503,11 @@ def propers(calendar_data, options):
                 raw = [line.strip() for line in f.readlines()]
             propers['psalterium/' + do_to_officium_psalm[psalm_range](psalm)] = raw
 
+    # The triple "alleluia" antiphon used in Divino and later is synthesised
+    # in DO, but it happens to be the same as the antiphon on the Laudate
+    # psalms in the pre-Divino psalter.
+    propers['psalterium/pasc/ad-vesperas/antiphonae'] = propers['daymp-laudes'][-1].split(';;')[0]
+
     for key in list(propers.keys()):
         if key.startswith('post-process'):
             post_process(propers, key)

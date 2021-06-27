@@ -219,6 +219,13 @@ class CalendarResolver(ABC):
         else:
             return None
 
+    @classmethod
+    def temporal_calpoint(cls, date):
+        week = cls.temporal_week(date)
+        if week:
+            return "%s-%d" % (week, date._day_of_week)
+        return None
+
     def generate_calpoints(self, date):
         days = [
             'Dominica',
@@ -256,9 +263,9 @@ class CalendarResolver(ABC):
                                            days[date.day_of_week]))
 
         # Temporal cycle, except for Christmas-Epiphany.
-        week = self.temporal_week(date)
-        if week is not None:
-            calpoints.append('%s-%s' % (week, date.day_of_week))
+        calpoint = self.temporal_calpoint(date)
+        if calpoint is not None:
+            calpoints.append(calpoint)
 
             # Office of our Lady on Saturday.
             if date.day_of_week == 6:
@@ -285,16 +292,21 @@ class CalendarResolver(ABC):
         return calpoint_season.lower()
 
     @classmethod
-    def default_descriptor(cls, calpoint):
-        desc = {
-            'titulus': calpoint,
-        }
+    def split_calpoint(cls, calpoint):
         # TODO: Use named groups here.
         m = re.match(r'(Pent|Adv|Nat|Epi|Quadp|Quad|Pasc)(\d+)-([0-6])$',
                      calpoint)
         if m:
-            calpoint_season, week, day = (m.group(1), int(m.group(2)),
-                                          int(m.group(3)))
+            return (m.group(1), int(m.group(2)), int(m.group(3)))
+        return None, None, None
+
+    @classmethod
+    def default_descriptor(cls, calpoint):
+        desc = {
+            'titulus': calpoint,
+        }
+        calpoint_season, week, day = cls.split_calpoint(calpoint)
+        if calpoint_season:
             desc['tempus'] = cls.season(calpoint_season, week, day)
             desc['hebdomada'] = week
             if desc['tempus'] in ['quad', 'passionis']:
@@ -541,7 +553,13 @@ class CalendarResolver(ABC):
         commemorations = self.resolve_commemorations(occurring_commem,
                                                      concurring_commem)
 
-        return [Vespers(date, self._data_map, self._index, self, office,
-                        concurring,
+        season = None
+        calpoint = self.temporal_calpoint(date)
+        if calpoint:
+            season, _, _ = self.split_calpoint(calpoint)
+            season = season.lower()
+
+        return [Vespers(date, self._data_map, self._index, self, season,
+                        office, concurring,
                         self.vespers_commem_filter(commemorations, date,
                                                    concurring))]

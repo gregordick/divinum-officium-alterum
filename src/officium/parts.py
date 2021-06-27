@@ -194,6 +194,14 @@ class Psalmody:
         lookup = StructuredLookup(self.antiphons_path, self.antiphon_class,
                                   list_root=True)
         antiphons = lookup.resolve(lang_data)
+
+        # Special case: If we have only one antiphon but multiple psalm-sets,
+        # flatten the psalm-sets into a single psalm-set.
+        if len(antiphons) == 1 and len(self.psalms) > 1:
+            self.psalms = [
+                [psalm for psalms in self.psalms for psalm in psalms]
+            ]
+
         return [Group(
             PsalmishWithAntiphon(antiphon, [descriptor_to_psalmish(psalm)
                                             for psalm in psalms])

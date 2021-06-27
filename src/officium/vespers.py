@@ -4,12 +4,13 @@ from . import psalmish
 from . import util
 
 class Vespers:
-    def __init__(self, date, generic_data, index, calendar_resolver, office,
-                 concurring, commemorations):
+    def __init__(self, date, generic_data, index, calendar_resolver, season,
+                 office, concurring, commemorations):
         self._date = date
         self._generic_data = generic_data
         self._index = index
         self._calendar_resolver = calendar_resolver
+        self._season = season
         self._office = office
         self._is_first = office in concurring
 
@@ -20,6 +21,10 @@ class Vespers:
         self._commemorations = list(commemorations)
 
     def lookup_order(self, office, items):
+        # XXX: The use of lambdas here is probably overengineered -- we could
+        # just mandate that the paths are prefixes and do a join rather than a
+        # call -- and the scoping doesn't behave in the way that we'd like.
+
         paths = [
             lambda item, key=key: '%s/%s' % (key, item)
             for key in office.keys
@@ -31,11 +36,17 @@ class Vespers:
         if isinstance(office, offices.Feria):
             sunday = office.keys[0][:-1] + '0'
             paths.append(lambda item: 'proprium/%s/%s' % (sunday, item))
-        paths += [
-            lambda item: 'psalterium/%s/%s' % (util.day_ids[self._date.day_of_week],
-                                               item),
-            lambda item: 'psalterium/%s' % (item,),
-        ]
+        prefixes = []
+        if self._season:
+            prefixes.append(self._season + '/')
+        prefixes.append('')
+        for prefix in prefixes:
+            paths += [
+                lambda item, prefix=prefix: 'psalterium/%s%s/%s' % (prefix,
+                                                                    util.day_ids[self._date.day_of_week],
+                                                                    item),
+                lambda item, prefix=prefix: 'psalterium/%s%s' % (prefix, item),
+            ]
         items = list(items)
         for path in paths:
             for item in items:
