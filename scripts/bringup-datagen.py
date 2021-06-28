@@ -272,6 +272,20 @@ def make_out_key(key, do_basename):
         out_key = 'proprium/de-tempore/quadragesima/ad-vesperas/hymnus'
     elif key == 'Quad Versum 3':
         out_key = 'proprium/de-tempore/quadragesima/ad-vesperas/versiculum'
+    elif key == 'Quad5 Versum 3':
+        out_key = 'proprium/de-tempore/passionis/ad-vesperas/versiculum'
+    elif key == 'Hymnus Quad5 Vespera':
+        out_key = 'proprium/de-tempore/passionis/ad-vesperas/hymnus'
+    # XXX: The Eastertide psalter bits live at a different place from those for
+    # Lent.  There are reasons why this is so, but not necessarily good ones:
+    # the latter use the extra_keys mechanism.
+    elif key == 'Pasch Versum 3':
+        out_key = 'psalterium/pasc/ad-vesperas/versiculum'
+    elif key == 'Hymnus Pasch Vespera':
+        out_key = 'psalterium/pasc/ad-vesperas/hymnus'
+    elif re.match(r'Day\d Versum 3$', key):
+        day = int(key[3])
+        out_key = 'psalterium/%s/ad-vesperas/versiculum' % (util.day_ids[day],)
     elif key == 'Gloria':
         out_key = 'versiculi/gloria-patri-post-psalmum'
     elif key in versicle_keys or key in post_process_keys:
@@ -413,7 +427,7 @@ def merge_do_propers(propers, redirections, do_redirections, generic,
                             line = re.sub(r'^([{].*[}])?(v[.]\s*)?', '', line)
                             verse.append(line)
                     value = verses
-                elif out_path.endswith('/capitulum'):
+                elif 'capitulum' in out_path:
                     if value and value[0].startswith('!'):
                         value = {
                             'scripture_ref': re.sub(r'^!\s*', '', value[0]),

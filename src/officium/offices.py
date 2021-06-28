@@ -138,8 +138,16 @@ class LentenSunday(Sunday):
         'proprium/de-tempore/quadragesima',
     ]
 
-class PassiontideFeria(LentenFeria): pass
-class PassiontideSunday(LentenSunday): pass
+class PassiontideFeria(LentenFeria):
+    extra_keys = [
+        'proprium/de-tempore/passionis/in-feriis',
+        'proprium/de-tempore/passionis',
+    ]
+
+class PassiontideSunday(LentenSunday):
+    extra_keys = [
+        'proprium/de-tempore/passionis',
+    ]
 
 class WithinOctave(Office): pass
 class OctaveDay(Office): pass
