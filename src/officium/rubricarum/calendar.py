@@ -214,7 +214,10 @@ class CalendarResolver1962(CalendarResolver):
 
     @classmethod
     def has_second_vespers(cls, office, date):
-        return not isinstance(office, Vigil)
+        return all(
+            not isinstance(office, Vigil),
+            super().has_second_vespers(office, date),
+        )
 
     @classmethod
     def privileged_commemoration(cls, office, date):

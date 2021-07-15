@@ -204,9 +204,11 @@ class CalendarResolverDA(CalendarResolver):
 
     @classmethod
     def has_second_vespers(cls, office, date):
-        # XXX: Ember days will be mishandled here.
-        return not isinstance(office, Vigil) and (isinstance(office, Feria) or
-                                                  office.rite > Rite.SIMPLE)
+        return all(
+            not isinstance(office, Vigil),
+            isinstance(office, Feria) or office.rite > Rite.SIMPLE,
+            super().has_second_vespers(office, date),
+        )
 
     @classmethod
     def concurrence_rank(cls, office):
@@ -249,9 +251,9 @@ class CalendarResolverDA(CalendarResolver):
                 resolution = Resolution.OMIT
 
             # Don't commemorate first vespers of the second day in the octave
-            # in second vespers of the feast itself.  TODO: Implement something
-            # like calcalc's octid in place of the "False".
-            elif isinstance(following, WithinOctave) and False:
+            # in second vespers of the feast itself.
+            elif (isinstance(following, WithinOctave) and
+                  following.octave_id == preceding.octave_id):
                 resolution = Resolution.OMIT
 
             else:
@@ -266,9 +268,9 @@ class CalendarResolverDA(CalendarResolver):
             # Don't commemorate second vespers of seventh day in the octave at
             # first vespers of the octave day.  Notice that, since the
             # following office beat the preceding, we can't have concurrence of
-            # two days in the octave here.  TODO: Implement something like
-            # calcalc's octid in place of the "False", as above.
-            if isinstance(preceding, WithinOctave) and False:
+            # two days in the octave here.
+            if (isinstance(preceding, WithinOctave) and
+                following.octave_id == preceding.octave_id):
                 resolution = Resolution.OMIT
 
             # Check for some days that are low-ranking in concurrence but
@@ -299,10 +301,9 @@ class CalendarResolverDA(CalendarResolver):
         # Both days are in the same concurrence category.
 
         # In concurrence of days within the same octave, second vespers take
-        # precedence and first vespers of the following are omitted
-        # TODO: octid in place of "True".
-        if (isinstance(preceding, WithinOctave) and
-            isinstance(following, WithinOctave) and True):
+        # precedence and first vespers of the following are omitted.
+        if (isinstance(following, WithinOctave) and
+            following.octave_id == preceding.octave_id):
             return (preceding, Resolution.OMIT)
 
         # In a Sunday or privileged octave day vs. a privileged octave day or

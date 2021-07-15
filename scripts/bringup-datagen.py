@@ -28,7 +28,10 @@ def make_descriptor(key, calcalc_lines):
     while calcalc_lines:
         rankline = calcalc_lines.pop(0)
         if '(sed' not in rankline:
-            break
+            if rankline.startswith('rank='):
+                rankline = rankline[5:]
+            if '=' not in rankline:
+                break
         print(rankline, file=sys.stderr)
     else:
         rankline = None
@@ -86,9 +89,19 @@ def make_descriptor(key, calcalc_lines):
                 'communis': 4,
                 'simplex': 5,
             }[m.group(1)]
+
+        if 'Pasc0' in key:
+            desc['officium'] = 'octavae-paschalis'
     else:
         # No rankline.
         desc['qualitas'] = 'dominica' if key.endswith('-0') else 'feria'
+
+    for remaining_line in calcalc_lines:
+        if remaining_line.startswith('octid='):
+            desc['octavae_nomen'] = remaining_line[6:].lower()
+        elif remaining_line == 'Officium terminatur post Nonam':
+            rubrics = desc.setdefault('rubricae', [])
+            rubrics.append('officium terminatur post nonam')
 
     return desc
 
@@ -114,12 +127,18 @@ def make_descriptors(key, calcalc_lines):
         yield make_descriptor(key, lines)
 
 
+do_rubric_names = {
+    'rubricarum': '1960',
+    'divino': 'Divino',
+}
+
 def _parse(f, options):
     raw = {}
     # Completely spurious parser, but good enough.
     rubric_squashed = False
     section = None
     accumulator = ''
+    do_rubric_name = do_rubric_names[options.rubrics]
     for line in f:
         line = line.rstrip()
 
@@ -128,12 +147,12 @@ def _parse(f, options):
             continue
 
         if re.match(r'[(].*[)]$', line):
-            rubric_squashed = '1960' not in line and 'deinde' not in line
+            rubric_squashed = do_rubric_name not in line and 'deinde' not in line
             if rubric_squashed and options.verbose:
                 print('SQUASH:', line, file=sys.stderr)
             continue
 
-        m = re.match(r'\[(.*)\].*1960', line)
+        m = re.match(r'\[(.*)\].*' + do_rubric_name, line)
         if not m:
             m = re.match(r'\[(.*)\]$', line)
         if m:
@@ -151,7 +170,7 @@ def _parse(f, options):
         if line.startswith(('V. ', 'R. ', 'v. ', 'r. ')):
             line = line[3:]
 
-        if not rubric_squashed and section is not None and '=' not in line or line.startswith('rank='):
+        if not rubric_squashed and section is not None:
             section.append(line)
 
     # Trim trailing blank lines.
@@ -184,13 +203,20 @@ def make_calendar(raw):
     create = {}
     append = {}
     for (key, entries) in d.items():
-        if key[len('calendarium/'):] in ['093-3', '093-5', '093-6']:
+        calpoint = key[len('calendarium/'):]
+        if calpoint in ['093-3', '093-5', '093-6']:
             append[key] = entries
         else:
-            sundays_and_ferias = [x for x in entries if x['qualitas'] in ['dominica', 'feria']]
-            others = [x for x in entries if x not in sundays_and_ferias]
-            if sundays_and_ferias:
-                create[key] = sundays_and_ferias
+            # This is very ad hoc: Sundays and ferias are easy, but we also
+            # want to catch the temporal octaves.  XXX: What about the octave
+            # of the Epiphany, and any sanctoral offices that happen to fall
+            # within it?
+            temporal = [x for x in entries
+                        if x['qualitas'] in ['dominica', 'feria'] or
+                           re.match(r'Pasc[0567]', calpoint)]
+            others = [x for x in entries if x not in temporal]
+            if temporal:
+                create[key] = temporal
             if others:
                 append[key] = others
 
@@ -219,7 +245,9 @@ def make_out_key(key, do_basename):
         'Per Dominum eiusdem',
         'Qui tecum eiusdem',
     ]
-    if key == 'Ant 1':
+    if key is None:
+        return None
+    elif key == 'Ant 1':
         out_key = 'ad-i-vesperas/ad-magnificat'
     elif key == 'Ant 3':
         out_key = 'ad-ii-vesperas/ad-magnificat'
@@ -256,6 +284,8 @@ def make_out_key(key, do_basename):
         out_key = 'ad-i-vesperas/versiculum'
     elif key == 'Versum 3':
         out_key = 'ad-ii-vesperas/versiculum'
+    elif key == 'Versum 2' and 'Pasc0-' in do_basename:
+        out_key = 'haec-dies'
     elif re.match(r'Day\d Vespera$', key):
         day = int(key[3])
         # This key is either the chapter or the antiphons and psalms, depending
@@ -301,11 +331,12 @@ def make_out_key(key, do_basename):
 
 
 def make_full_path(out_key_base, out_key):
+    assert out_key or out_key_base
+    components = []
     if out_key_base is not None:
-        assert out_key_base
-        components = [out_key_base, out_key]
-    else:
-        components = [out_key]
+        components.append(out_key_base)
+    if out_key is not None:
+        components.append(out_key)
     return '/'.join(components)
 
 
@@ -386,10 +417,20 @@ def merge_do_propers(propers, redirections, do_redirections, generic,
         return False
     for (do_key, value) in do_propers.items():
         if do_key == 'Rank':
-            m = re.search(r'(ex|vide) (C.*)\b\s*$', do_propers[do_key][0])
+            m = re.search(r'\b(ex|vide)\b\s+\b(.*)\b\s*$', do_propers[do_key][0])
             if m:
+                # TODO: Distinguish between "ex" and "vide".
                 assert out_key_base
-                redirections[out_key_base] = 'commune/' + m.group(2)
+                basename = m.group(2)
+                if re.match(r'C\d+', basename):
+                    redirections[out_key_base] = 'commune/' + basename
+                else:
+                    if '/' not in basename:
+                        if re.match(r'\d\d-\d\d', basename):
+                            basename = 'Sancti/' + basename
+                        else:
+                            basename = 'Tempora/' + basename
+                    do_redirections[out_key_base] = (basename, None)
         elif do_key != 'Rule':
             out_path = make_full_path(out_key_base, make_out_key(do_key,
                                                                  do_basename))
@@ -427,6 +468,8 @@ def merge_do_propers(propers, redirections, do_redirections, generic,
                             line = re.sub(r'^([{].*[}])?(v[.]\s*)?', '', line)
                             verse.append(line)
                     value = verses
+                elif out_path.endswith('/haec-dies'):
+                    value = [re.sub(r'^Ant\. |[*]\s*', '', x) for x in value]
                 elif 'capitulum' in out_path:
                     if value and value[0].startswith('!'):
                         value = {
@@ -592,8 +635,8 @@ def parse_args():
                             'generic',
                         ],
                         default='generic')
-    parser.add_argument('--rubrics', '-r', choices=['Rubrics 1960'],
-                        default='Rubrics 1960')
+    parser.add_argument('--rubrics', '-r', choices=do_rubric_names.keys(),
+                        default='rubricarum')
     parser.add_argument('--verbose', '-v', action='store_true')
     parser.add_argument('datafile')
     return parser.parse_args()
@@ -604,7 +647,8 @@ def main(options):
 
     if options.format != 'raw':
         out = make_calendar(out)
-        from_propers = propers(bringup.make_generic('rubricarum', out), options)
+        from_propers = propers(bringup.make_generic(options.rubrics, out),
+                               options)
         if options.format == 'propers':
             out = from_propers
         else:
