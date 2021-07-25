@@ -52,7 +52,10 @@ def make_data(*base_dicts):
 
 
 def make_generic(rubrics, raw_generic):
-    data = make_data(resolvers[rubrics].base_calendar())
+    generic = {
+        'proprium/dominica-resurrectionis/ad-i-vesperas/psalmi': [['psalmi/116']],
+    }
+    data = make_data(resolvers[rubrics].base_calendar(), generic)
     merge_records(data, raw_generic)
     return data
 
@@ -66,6 +69,7 @@ def make_latin(raw_latin):
         'versiculi/alleluja': 'Allelúja.',
         'versiculi/laus-tibi-domine': 'Laus tibi, Dómine, Rex ætérnæ glóriæ.',
         'formula-alleluia-simplicis': 'allel[uú][ij]a',
+        'proprium/dominica-resurrectionis/ad-i-vesperas/antiphonae': ['Allelúja, * allelúja, allelúja.'],
     }
 
     data = make_data(latin)

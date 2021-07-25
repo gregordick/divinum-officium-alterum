@@ -6,7 +6,7 @@ import itertools
 import re
 
 from . import offices
-from .vespers import Vespers
+from . import hours
 
 
 BVM_SATURDAY_CALPOINT = 'SMariaeInSabbato'
@@ -432,11 +432,8 @@ class CalendarResolver(ABC):
 
     @classmethod
     def has_second_vespers(cls, office, date):
-        if isinstance(office, offices.Vigil):
-            return False
-        if isinstance(office, offices.Feria):
-            return True
-        return office.rite != offices.Rite.SIMPLE
+        # Child classes should override this method and add further exceptions.
+        return not office.second_vespers_suppressed
 
     @classmethod
     def vespers_commem_filter(cls, commemorations, date, concurring):
@@ -501,6 +498,10 @@ class CalendarResolver(ABC):
 
         return result
 
+    @classmethod
+    def hour_classes(cls, office):
+        return hours.hours_map[office.hours_key]
+
     def offices(self, date):
         today, tomorrow = self.resolve_transfer(date, date + 1)
 
@@ -559,7 +560,12 @@ class CalendarResolver(ABC):
             season, _, _ = self.split_calpoint(calpoint)
             season = season.lower()
 
-        return [Vespers(date, self._data_map, self._index, self, season,
+        hour_classes = self.hour_classes(office)
+
+        vespers = (hour_classes.second_vespers if second_vespers
+                   else hour_classes.first_vespers)
+
+        return [vespers(date, self._data_map, self._index, self, season,
                         office, concurring,
                         self.vespers_commem_filter(commemorations, date,
                                                    concurring))]

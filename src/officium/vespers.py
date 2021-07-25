@@ -64,27 +64,13 @@ class Vespers:
     def lookup_main(self, *items):
         return self.lookup(self._office, self._is_first, *items)
 
-    def resolve(self):
-        # XXX: Information about the season should come with the offices for the
-        # day.  Also, take care about the boundaries.
-        easter = self._calendar_resolver.easter_sunday(self._date.year)
-        alleluia = not (easter - 7 * 9 <= self._date < easter - 1)
-        eastertide = easter <= self._date < easter + 8 * 7 - 1
-
-        if eastertide:
-            antiphon_class = parts.AntiphonWithAlleluia
-            vr_class = parts.VersicleWithResponseWithAlleluia
-        else:
-            antiphon_class = parts.Antiphon
-            vr_class = parts.VersicleWithResponse
-
-        yield parts.deus_in_adjutorium(alleluia)
-
+    def psalmody(self, antiphon_class):
         antiphons = self.lookup_main('antiphonae')
         psalms = self.lookup_main('psalmi')
         yield parts.Psalmody(antiphons, self._generic_data[psalms],
                              antiphon_class)
 
+    def chapter_hymn_and_verse(self, vr_class):
         yield parts.StructuredLookup(self.lookup_main('capitulum'),
                                      parts.Chapter)
         yield parts.StructuredLookup(self.lookup_main('hymnus'),
@@ -92,13 +78,14 @@ class Vespers:
         versicle_pair = self.lookup_main('versiculum')
         yield parts.StructuredLookup(versicle_pair, vr_class)
 
+    def magnificat(self, antiphon_class):
         path = self.lookup_main('ad-magnificat')
         mag_ant = parts.StructuredLookup(path, antiphon_class)
         # XXX: Slashes.
         mag = psalmish.PsalmishWithGloria('ad-vesperas/magnificat')
         yield parts.PsalmishWithAntiphon(mag_ant, [mag])
 
-        # Oration.
+    def oration(self):
         oration_path = self.lookup_main('oratio-super-populum', 'oratio')
         oration = parts.StructuredLookup(oration_path, parts.Oration)
         yield parts.Group([
@@ -109,7 +96,7 @@ class Vespers:
             parts.amen(),
         ])
 
-        # Commemorations.
+    def commemorations(self, antiphon_class, vr_class):
         for i, commem in enumerate(self._commemorations):
             is_first = commem in self._concurring
             versicle_pair = self.lookup(commem, is_first, 'versiculum')
@@ -131,7 +118,7 @@ class Vespers:
                 ]
             yield parts.Group(part_list)
 
-        # Conclusion.
+    def conclusion(self):
         yield parts.Group([
             parts.dominus_vobiscum(),
             parts.VersicleWithResponse([
@@ -147,3 +134,39 @@ class Vespers:
                                        parts.VersicleResponse),
             ]),
         ])
+
+    def resolve(self):
+        # XXX: Information about the season should come with the offices for the
+        # day.  Also, take care about the boundaries.
+        easter = self._calendar_resolver.easter_sunday(self._date.year)
+        alleluia = not (easter - 7 * 9 <= self._date < easter - 1)
+        eastertide = easter <= self._date < easter + 8 * 7 - 1
+
+        if eastertide:
+            antiphon_class = parts.AntiphonWithAlleluia
+            vr_class = parts.VersicleWithResponseWithAlleluia
+        else:
+            antiphon_class = parts.Antiphon
+            vr_class = parts.VersicleWithResponse
+
+        yield parts.deus_in_adjutorium(alleluia)
+
+        yield from self.psalmody(antiphon_class)
+        yield from self.chapter_hymn_and_verse(vr_class)
+        yield from self.magnificat(antiphon_class)
+        yield from self.oration()
+        yield from self.commemorations(antiphon_class, vr_class)
+        yield from self.conclusion()
+
+
+class HolySaturdayVespers(Vespers):
+    def resolve(self):
+        yield from self.psalmody(parts.AntiphonWithAlleluia)
+        yield from self.magnificat(parts.AntiphonWithAlleluia)
+        yield from self.oration()
+        yield from self.conclusion()
+
+class EasterOctaveVespers(Vespers):
+    def chapter_hymn_and_verse(self, vr_class):
+        yield parts.StructuredLookup(self.lookup_main('haec-dies'),
+                                     parts.Antiphon)

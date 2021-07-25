@@ -74,6 +74,21 @@ class Office:
         # too.
         return int(self.desc.get('octavae_ordo', 6))
 
+    @property
+    def octave_id(self):
+        return self.desc.get('octavae_nomen')
+
+    @property
+    def hours_key(self):
+        return self.desc.get('officium', 'communis')
+
+    @property
+    def second_vespers_suppressed(self):
+        """Whether the office specifies explicitly that it should not have
+        second Vespers, as a means of overriding a general rule.
+        """
+        rubrics = self.desc.get('rubricae', [])
+        return 'officium terminatur post nonam' in rubrics
 
 class Feast(Office):
     @property
