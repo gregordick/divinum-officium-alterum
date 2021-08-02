@@ -349,6 +349,11 @@ def make_out_key(key, do_basename):
         basename = key.replace(' ', '-').lower()
         prefix = 'post-process' if key in post_process_keys else 'versiculi'
         out_key = '%s/%s' % (prefix, basename,)
+    elif key == 'Name':
+        # St Valentine happens to be in the genitive, although I don't think
+        # DO used it.  XXX: Merge this into name_case().
+        out_key = ('nomen/genitivo' if do_basename.endswith('02-14')
+                   else 'nomen/vocativo')
     else:
         if not key in warn_keys:
             print("WARNING: Unrecognised key %s" % (key,), file=sys.stderr)
@@ -434,6 +439,132 @@ do_to_officium_psalm = {
 }
 
 
+def name_case(do_basename, do_key):
+    if do_basename.endswith('C1'):
+        return 'nominativo'
+    if do_basename.endswith('C1v') and do_key == 'Oratio':
+        return 'nominativo'
+    if do_basename.endswith('C2') and do_key == 'Oratio3':
+        return 'ablativo'
+    if do_basename.endswith('C4') and re.match(r'Oratio[29]', do_key):
+        # This includes Oratio91.
+        return 'accusativo'
+    if any(do_basename.endswith(x)
+           for x in ['C4a', 'C4ap']) and do_key == 'Ant 1':
+        return 'vocativo'
+    if do_basename.endswith('C4ap') and do_key == 'Oratio2':
+        return 'accusativo'
+    if do_basename.endswith('C6') and do_key == 'Oratio1':
+        return 'nominativo'
+    if do_basename.endswith('SanctiM/C7') and do_key == 'Responsory9':
+        return 'nominativo'
+    return 'genitivo'
+
+
+def merge_do_section(propers, redirections, do_redirections, generic,
+                     do_basename, out_key_base, do_key, value):
+    if do_key == 'Rank':
+        m = re.search(r'\b(ex|vide)\b\s+\b(.*)\b\s*$', value[0])
+        if m:
+            # TODO: Distinguish between "ex" and "vide".
+            assert out_key_base
+            basename = m.group(2)
+            if re.match(r'C\d+', basename):
+                redirections[out_key_base] = 'commune/' + basename
+            else:
+                if '/' not in basename:
+                    if re.match(r'\d\d-\d\d', basename):
+                        basename = 'Sancti/' + basename
+                    else:
+                        basename = 'Tempora/' + basename
+                do_redirections[out_key_base] = (basename, None)
+    elif do_key == 'Rule':
+        for line in value:
+            m = re.match(r'[OC]Papae?[MCD]=(.*);', line)
+            if m:
+                out_path = make_full_path(out_key_base, 'nomen/accusativo')
+                # We might have one name, or we might have two.
+                raw_names = m.group(1)
+                m = re.match(r'(.*) et (.*)$', raw_names)
+                names = list(m.groups()) if m else raw_names
+                propers[out_path] = names
+    else:
+        out_path = make_full_path(out_key_base, make_out_key(do_key,
+                                                             do_basename))
+        m = (re.match(r'@([^:]*)(?::([^:]*))?(?::([^:]*))?', value[0]) if value
+             else None)
+        if m:
+            redir_basename, redir_key, subs = m.groups()
+            if not redir_basename:
+                redir_basename = do_basename
+            if not redir_key:
+                redir_key = do_key
+            do_redirections[out_path] = (redir_basename, redir_key)
+            assert 'post-process' not in out_path
+
+            for sub in (subs or '').split():
+                names = None
+                m = re.match(r's/N\\\. et N\\\./([^/]*)', sub)
+                if m:
+                    # If we have two names, store an array of them.
+                    names = m.group(1).split(' et ')
+                m = not names and re.match(r's/N\\\./([^/]*)', sub)
+                if m:
+                    # With one name, just store a string.
+                    names = m.group(1)
+                if names is not None:
+                    case = name_case(redir_basename, redir_key)
+                    sub_out_path = make_full_path(out_key_base,
+                                                  'nomen/%s' % (case,))
+                    propers[sub_out_path] = names
+        else:
+            template_var = 'officium.nomen_' + name_case(do_basename, do_key)
+            # XXX: Latin-specific.
+            value = [
+                re.sub(r'\bN[.] et N[.]\B',
+                       '{{%s[0]}} et {{%s[1]}}' % (template_var, template_var),
+                       x)
+                for x in value
+            ]
+            value = [re.sub(r'\bN[.]\B', '{{%s}}' % (template_var,), x)
+                     for x in value]
+            if out_path.endswith('/antiphonae'):
+                # Separate out the psalms.
+                try:
+                    value, psalms = zip(*(entry.split(';;')
+                                          for entry in value))
+                    generic[out_path[:-len('/antiphonae')] + '/psalmi'] = [
+                        ['psalmi/%s' % (p,) for p in psalm_spec.split(';')]
+                        for psalm_spec in psalms
+                    ]
+                    value = list(value)
+                except ValueError:
+                    # Some or all entries were missing psalms.
+                    pass
+            elif out_path.endswith('/hymnus'):
+                verse = []
+                verses = [verse]
+                for line in value:
+                    if line.strip() == '_':
+                        verse = []
+                        verses.append(verse)
+                    else:
+                        line = re.sub(r'^([{].*[}])?(v[.]\s*)?', '', line)
+                        verse.append(line)
+                value = verses
+            elif out_path.endswith('/haec-dies'):
+                value = [re.sub(r'^Ant\. |[*]\s*', '', x) for x in value]
+            elif 'capitulum' in out_path:
+                if value and value[0].startswith('!'):
+                    value = {
+                        'scripture_ref': re.sub(r'^!\s*', '', value[0]),
+                        'content': value[1:]
+                    }
+            elif '/nomen/' in out_path and len(value) == 1:
+                value = value[0]
+            propers[out_path] = value
+
+
 def merge_do_propers(propers, redirections, do_redirections, generic,
                      do_propers_base, do_basename, out_key_base, options,
                      do_rubric_name):
@@ -444,67 +575,8 @@ def merge_do_propers(propers, redirections, do_redirections, generic,
         print("Not found: %s" % (do_filename,), file=sys.stderr)
         return False
     for (do_key, value) in do_propers.items():
-        if do_key == 'Rank':
-            m = re.search(r'\b(ex|vide)\b\s+\b(.*)\b\s*$', do_propers[do_key][0])
-            if m:
-                # TODO: Distinguish between "ex" and "vide".
-                assert out_key_base
-                basename = m.group(2)
-                if re.match(r'C\d+', basename):
-                    redirections[out_key_base] = 'commune/' + basename
-                else:
-                    if '/' not in basename:
-                        if re.match(r'\d\d-\d\d', basename):
-                            basename = 'Sancti/' + basename
-                        else:
-                            basename = 'Tempora/' + basename
-                    do_redirections[out_key_base] = (basename, None)
-        elif do_key != 'Rule':
-            out_path = make_full_path(out_key_base, make_out_key(do_key,
-                                                                 do_basename))
-            m = re.match(r'@([^:]*)(?::([^:]*))?', value[0]) if value else None
-            if m:
-                redir_basename, redir_key = m.groups()
-                if not redir_basename:
-                    redir_basename = do_basename
-                if not redir_key:
-                    redir_key = do_key
-                do_redirections[out_path] = (redir_basename, redir_key)
-                assert 'post-process' not in out_path
-            else:
-                if out_path.endswith('/antiphonae'):
-                    # Separate out the psalms.
-                    try:
-                        value, psalms = zip(*(entry.split(';;')
-                                              for entry in value))
-                        generic[out_path[:-len('/antiphonae')] + '/psalmi'] = [
-                            ['psalmi/%s' % (p,) for p in psalm_spec.split(';')]
-                            for psalm_spec in psalms
-                        ]
-                        value = list(value)
-                    except ValueError:
-                        # Some or all entries were missing psalms.
-                        pass
-                elif out_path.endswith('/hymnus'):
-                    verse = []
-                    verses = [verse]
-                    for line in value:
-                        if line.strip() == '_':
-                            verse = []
-                            verses.append(verse)
-                        else:
-                            line = re.sub(r'^([{].*[}])?(v[.]\s*)?', '', line)
-                            verse.append(line)
-                    value = verses
-                elif out_path.endswith('/haec-dies'):
-                    value = [re.sub(r'^Ant\. |[*]\s*', '', x) for x in value]
-                elif 'capitulum' in out_path:
-                    if value and value[0].startswith('!'):
-                        value = {
-                            'scripture_ref': re.sub(r'^!\s*', '', value[0]),
-                            'content': value[1:]
-                        }
-                propers[out_path] = value
+        merge_do_section(propers, redirections, do_redirections, generic,
+                         do_basename, out_key_base, do_key, value)
     return True
 
 

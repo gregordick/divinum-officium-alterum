@@ -20,6 +20,10 @@ class Vespers:
 
         self._commemorations = list(commemorations)
 
+        # Template context for the office of the day.  TODO: Handle offices
+        # that are from the chapter of the following.
+        self._primary_template_context = self.make_template_context(self._office)
+
     def lookup_order(self, office, items):
         # XXX: The use of lambdas here is probably overengineered -- we could
         # just mandate that the paths are prefixes and do a join rather than a
@@ -68,26 +72,31 @@ class Vespers:
         antiphons = self.lookup_main('antiphonae')
         psalms = self.lookup_main('psalmi')
         yield parts.Psalmody(antiphons, self._generic_data[psalms],
-                             antiphon_class)
+                             self._primary_template_context, antiphon_class)
 
     def chapter_hymn_and_verse(self, vr_class):
         yield parts.StructuredLookup(self.lookup_main('capitulum'),
-                                     parts.Chapter)
+                                     parts.Chapter,
+                                     self._primary_template_context)
         yield parts.StructuredLookup(self.lookup_main('hymnus'),
-                                     parts.Hymn)
+                                     parts.Hymn, self._primary_template_context)
         versicle_pair = self.lookup_main('versiculum')
-        yield parts.StructuredLookup(versicle_pair, vr_class)
+        yield parts.StructuredLookup(versicle_pair, vr_class,
+                                     self._primary_template_context)
 
     def magnificat(self, antiphon_class):
         path = self.lookup_main('ad-magnificat')
-        mag_ant = parts.StructuredLookup(path, antiphon_class)
+        mag_ant = parts.StructuredLookup(path, antiphon_class,
+                                         self._primary_template_context)
         # XXX: Slashes.
         mag = psalmish.PsalmishWithGloria('ad-vesperas/magnificat')
-        yield parts.PsalmishWithAntiphon(mag_ant, [mag])
+        yield parts.PsalmishWithAntiphon(mag_ant, [mag],
+                                         self._primary_template_context)
 
     def oration(self):
         oration_path = self.lookup_main('oratio-super-populum', 'oratio')
-        oration = parts.StructuredLookup(oration_path, parts.Oration)
+        oration = parts.StructuredLookup(oration_path, parts.Oration,
+                                         self._primary_template_context)
         yield parts.Group([
             parts.dominus_vobiscum(),
             parts.oremus(),
@@ -102,13 +111,16 @@ class Vespers:
             versicle_pair = self.lookup(commem, is_first, 'versiculum')
             oration_path = self.lookup(commem, is_first,
                                        'oratio-super-populum', 'oratio')
+            template_context = self.make_template_context(commem)
             part_list = [
                 parts.StructuredLookup(self.lookup(commem, is_first,
                                                    'ad-magnificat'),
-                                       antiphon_class),
-                parts.StructuredLookup(versicle_pair, vr_class),
+                                       antiphon_class, template_context),
+                parts.StructuredLookup(versicle_pair, vr_class,
+                                       template_context),
                 parts.oremus(),
-                parts.StructuredLookup(oration_path, parts.Oration),
+                parts.StructuredLookup(oration_path, parts.Oration,
+                                       template_context),
             ]
             # Only the last commemoration gets the conclusion.
             if i == len(self._commemorations) - 1:
@@ -158,6 +170,25 @@ class Vespers:
         yield from self.commemorations(antiphon_class, vr_class)
         yield from self.conclusion()
 
+    @staticmethod
+    def make_template_context(office):
+        # XXX: Using keys[0] is wrong; factor out multi-key lookup so that
+        # TemplateContext can use it too.
+        return parts.TemplateContext(
+            direct_symbols={},
+            indirect_symbols={
+                'nomen_' + case: '/nomen/'.join([office.keys[0], case])
+                for case in [
+                    'nominativo',
+                    'vocativo',
+                    'accusativo',
+                    'genitivo',
+                    'dativo',
+                    'ablativo',
+                ]
+            },
+        )
+
 
 class HolySaturdayVespers(Vespers):
     def resolve(self):
@@ -169,4 +200,5 @@ class HolySaturdayVespers(Vespers):
 class EasterOctaveVespers(Vespers):
     def chapter_hymn_and_verse(self, vr_class):
         yield parts.StructuredLookup(self.lookup_main('haec-dies'),
-                                     parts.Antiphon)
+                                     parts.Antiphon,
+                                     self._primary_template_context)

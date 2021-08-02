@@ -70,6 +70,10 @@ def make_latin(raw_latin):
         'versiculi/laus-tibi-domine': 'Laus tibi, Dómine, Rex ætérnæ glóriæ.',
         'formula-alleluia-simplicis': 'allel[uú][ij]a',
         'proprium/dominica-resurrectionis/ad-i-vesperas/antiphonae': ['Allelúja, * allelúja, allelúja.'],
+        'proprium/ss-soteris-et-caji-paparum-et-martyrum/nomen/genitivo': [
+            'Sotéris',
+            'Caji',
+        ],
     }
 
     data = make_data(latin)

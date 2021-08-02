@@ -1,6 +1,8 @@
 import itertools
 import re
 
+import jinja2
+
 from officium import data
 from officium.psalmish import descriptor_to_psalmish
 
@@ -73,15 +75,46 @@ class Oration(Group): pass
 class OrationConclusion(Group): pass
 
 
+class TemplateContextLookup:
+    def __init__(self, symbols, lang_data):
+        self.symbols = symbols
+        self.lang_data = lang_data
+
+    def __getattr__(self, attr):
+        # XXX: Fail nicely here if attr is not in symbols.
+        key = self.symbols[attr]
+        # XXX: Should some of this use the index??
+        return self.lang_data.get(self.lang_data.lookup([key]), '?')
+
+
+class TemplateContext:
+    def __init__(self, direct_symbols, indirect_symbols,
+                 indirect_label='officium'):
+        self.direct_symbols = direct_symbols
+        self.indirect_symbols = indirect_symbols
+        self.indirect_label = indirect_label
+
+    def expand(self, value, lang_data):
+        template = jinja2.Template(value)
+        lookup = TemplateContextLookup(self.indirect_symbols, lang_data)
+        return template.render(
+            {self.indirect_label: lookup},
+            **self.direct_symbols
+        )
+
+
 class StructuredLookup:
     # Classes that can be referred to by a label.
     labelled_classes = {
     }
 
-    def __init__(self, path, default_class=Group, list_root=False,
-                 raw_filter=None):
+    def __init__(self, path, default_class=Group, template_context=None,
+                 list_root=False, raw_filter=None):
         self.path = path
         self.default_class = default_class
+        if template_context is None:
+            template_context = TemplateContext({}, {})
+        self.template_context = template_context
         self.list_root = list_root
         self.raw_filter = raw_filter
 
@@ -104,18 +137,17 @@ class StructuredLookup:
         else:
             return [self.build_renderable(self.default_class, child, lang_data)]
 
-    @classmethod
-    def build_renderable(cls, default_class, raw, lang_data):
+    def build_renderable(self, default_class, raw, lang_data):
         record_class, value, meta = data.maybe_labelled(raw,
-                                                        cls.labelled_classes,
+                                                        self.labelled_classes,
                                                         default_class)
 
         # XXX: record_class and record_arg are bad names.
 
         if issubclass(record_class, Group):
             # We're creating a Group, so we iterate to provide child-defaults.
-            children = cls.build_renderable_list(record_class.child_default,
-                                                 value, lang_data)
+            children = self.build_renderable_list(record_class.child_default,
+                                                  value, lang_data)
             children = record_class.transform(children, lang_data)
             return record_class(children, **meta)
         else:
@@ -127,22 +159,23 @@ class StructuredLookup:
                 raise DataValidationError("Meta in non-Group context %r: %r" %
                                           (record_class, raw))
 
+            value = self.template_context.expand(value, lang_data)
             return record_class(value)
 
         assert False, "Unreachable"
 
-    @classmethod
-    def build_renderable_list(cls, default_classes, raw, lang_data):
+    def build_renderable_list(self, default_classes, raw, lang_data):
         if not isinstance(raw, list):
             raw = [raw]
-        return [cls.build_renderable(default_class, item, lang_data)
+        return [self.build_renderable(default_class, item, lang_data)
                 for (item, default_class) in zip(raw, default_classes)]
 
 
 class PsalmishWithAntiphon:
-    def __init__(self, antiphon, psalmishes):
+    def __init__(self, antiphon, psalmishes, template_context):
         self.antiphon = antiphon
         self.psalmishes = psalmishes
+        self.template_context = template_context
 
     @staticmethod
     def make_psalm_verse_filter(start, end):
@@ -176,23 +209,25 @@ class PsalmishWithAntiphon:
             else:
                 key = psalmish.key
                 the_filter = None
-            yield StructuredLookup(key, PsalmVerse, list_root=True,
-                                   raw_filter=the_filter)
+            yield StructuredLookup(key, PsalmVerse, self.template_context,
+                                   list_root=True, raw_filter=the_filter)
             if psalmish.gloria:
                 yield StructuredLookup('versiculi/gloria-patri-post-psalmum',
-                                       PsalmVerse, list_root=True)
+                                       PsalmVerse, self.template_context,
+                                       list_root=True)
         yield self.antiphon
 
 
 class Psalmody:
-    def __init__(self, antiphons_path, psalms, antiphon_class=Antiphon):
+    def __init__(self, antiphons_path, psalms, template_context, antiphon_class=Antiphon):
         self.antiphons_path = antiphons_path
-        self.antiphon_class = antiphon_class
         self.psalms = psalms
+        self.template_context = template_context
+        self.antiphon_class = antiphon_class
 
     def resolve(self, lang_data):
         lookup = StructuredLookup(self.antiphons_path, self.antiphon_class,
-                                  list_root=True)
+                                  self.template_context, list_root=True)
         antiphons = lookup.resolve(lang_data)
 
         # Special case: If we have only one antiphon but multiple psalm-sets,
@@ -204,7 +239,8 @@ class Psalmody:
 
         return [Group(
             PsalmishWithAntiphon(antiphon, [descriptor_to_psalmish(psalm)
-                                            for psalm in psalms])
+                                            for psalm in psalms],
+                                 self.template_context)
             for (antiphon, psalms) in zip(antiphons, self.psalms)
         )]
 
