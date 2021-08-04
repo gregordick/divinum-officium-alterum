@@ -4,11 +4,11 @@
 
 import argparse
 
-from officium.bringup import bringup_components, make_date, render, resolvers
+from officium.bringup import bringup_components, make_date, resolvers
 from officium.parts import Antiphon, StructuredLookup, Versicle, VersicleResponse, Psalmody
 
 
-def render_callback(thing, ctx):
+def render_one(thing):
     if isinstance(thing, Antiphon):
         print("Ant. ", end='')
     if isinstance(thing, Versicle):
@@ -17,6 +17,20 @@ def render_callback(thing, ctx):
         print("R. ", end='')
     elif isinstance(thing, str):
         print(thing)
+
+
+def render(things, lang_data):
+    for thing in things:
+        render_one(thing)
+        if not isinstance(thing, str):
+            try:
+                children = thing.resolve()
+                render(children, lang_data)
+            except TypeError:
+                if lang_data:
+                    render(thing.resolve(lang_data), lang_data)
+                else:
+                    render_one(repr(thing))
 
 
 def parse_args():
@@ -50,7 +64,7 @@ def main():
                 print("Office:", office._office)
                 print("Commemorations:", office._commemorations)
                 print("Concurring:", office._concurring)
-            render(offices, lang_data, options.render, render_callback)
+            render(offices, lang_data)
         current_date += 1
 
 

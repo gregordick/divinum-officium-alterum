@@ -6,21 +6,6 @@ from officium.divino.calendar import CalendarResolverDA
 from officium.rubricarum.calendar import CalendarResolver1962
 
 
-def render(things, data, do_render, cb, ctx=None):
-    for thing in things:
-        child_ctx = cb(thing, ctx)
-        if not isinstance(thing, str):
-            try:
-                children = thing.resolve()
-            except TypeError:
-                if do_render:
-                    children = thing.resolve(data)
-                else:
-                    cb(repr(thing), child_ctx)
-                    continue
-            render(children, data, do_render, cb, child_ctx)
-
-
 resolvers = {
     'rubricarum': CalendarResolver1962,
     'divino':     CalendarResolverDA,
@@ -81,20 +66,22 @@ def make_latin(raw_latin):
     return data
 
 
-def bringup_components(generic_file, lang_data_file, rubrics):
+# XXX: Latin is special here, but only because we're building the index, which
+# in principle should be external.
+def bringup_components(generic_file, latin_data_file, rubrics):
     with open(generic_file) as f:
         raw_generic = yaml.load(f, Loader=yaml.CSafeLoader)
-    with open(lang_data_file) as f:
-        raw_lang_data = yaml.load(f, Loader=yaml.CSafeLoader)
+    with open(latin_data_file) as f:
+        raw_latin_data = yaml.load(f, Loader=yaml.CSafeLoader)
 
     data = make_generic(rubrics, raw_generic)
-    lang_data = make_latin(raw_lang_data)
-    index = make_data(data.dictionary, lang_data.dictionary)
+    latin_data = make_latin(raw_latin_data)
+    index = make_data(data.dictionary, latin_data.dictionary)
     for key in index.dictionary:
         index.dictionary[key] = 'INDEX'
-    # XXX: Redirections shouldn't be in lang_data.
-    index.redirections = dict(data.redirections, **lang_data.redirections)
+    # XXX: Redirections shouldn't be in latin_data.
+    index.redirections = dict(data.redirections, **latin_data.redirections)
 
     resolver = resolvers[rubrics](data, index)
 
-    return resolver, lang_data
+    return resolver, latin_data

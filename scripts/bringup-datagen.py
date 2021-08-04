@@ -374,7 +374,8 @@ def make_full_path(out_key_base, out_key):
 
 
 do_to_officium_psalm = {
-    range(1, 151): lambda number: 'psalmi/%d' % (number,),
+    range(1, 93): lambda number: 'psalmi/%d' % (number,),
+    range(95, 151): lambda number: 'psalmi/%d' % (number,),
     (231,): lambda number: 'ad-laudes/benedictus',
     (232,): lambda number: 'ad-vesperas/magnificat',
     (233,): lambda number: 'ad-completorium/nunc-dimittis',
@@ -623,7 +624,7 @@ def propers(calendar_data, options, do_rubric_name):
     do_filename_to_officium = {}
 
     do_propers_base = os.path.join(options.do_basedir, 'web', 'www', 'horas',
-                                   'Latin')
+                                   options.language)
 
     def merge():
         do_filename_to_officium[do_basename] = out_key_base
@@ -736,6 +737,12 @@ def parse_args():
                             'generic',
                         ],
                         default='generic')
+    # This is used as the subdirectory of web/www/horas.
+    parser.add_argument('--language', choices=[
+                            'Latin',
+                            'English',
+                        ],
+                        default='Latin')
     parser.add_argument('--rubrics', '-r', choices=do_rubric_names.keys(),
                         default='rubricarum')
     parser.add_argument('--verbose', '-v', action='store_true')
