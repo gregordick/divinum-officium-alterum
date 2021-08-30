@@ -58,7 +58,7 @@ def main():
     resolver._resolve_transfer_cache_base = current_date
 
     while current_date <= date:
-        offices = resolver.offices(current_date)
+        offices = resolver.offices(current_date)['vespers']
         if options.verbose or current_date == date:
             for office in offices:
                 print("Office:", office._office)

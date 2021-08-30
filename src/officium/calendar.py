@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import calendar as stdlib_calendar
+from collections import OrderedDict
 import datetime
 import enum
 import itertools
@@ -565,7 +566,10 @@ class CalendarResolver(ABC):
         vespers = (hour_classes.second_vespers if second_vespers
                    else hour_classes.first_vespers)
 
-        return [vespers(date, self._data_map, self._index, self, season,
-                        office, concurring,
-                        self.vespers_commem_filter(commemorations, date,
-                                                   concurring))]
+        return OrderedDict([
+            ('vespers', [vespers(date, self._data_map, self._index, self,
+                                 season, office, concurring,
+                                 self.vespers_commem_filter(commemorations,
+                                                            date,
+                                                            concurring))]),
+        ])
