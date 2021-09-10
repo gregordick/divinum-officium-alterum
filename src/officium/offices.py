@@ -166,3 +166,6 @@ class PassiontideSunday(LentenSunday):
 
 class WithinOctave(Office): pass
 class OctaveDay(Office): pass
+
+class OfTheDead(Office):
+    hours_key = 'defunctorum'

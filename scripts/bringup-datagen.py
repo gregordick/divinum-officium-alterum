@@ -84,6 +84,8 @@ def make_descriptor(key, calcalc_lines, do_rubric_name):
 
         if key.endswith(calendar.BVM_SATURDAY_CALPOINT):
             desc['qualitas'] = 'officium sanctae mariae in sabbato'
+        elif key.endswith('11-02'):
+            desc['qualitas'] = 'defunctorum'
         elif rankline.startswith('Festum'):
             desc['qualitas'] = 'festum'
         elif rankline.startswith('Dominica'):
@@ -271,6 +273,10 @@ def make_out_key(key, do_basename):
         'Qui tecum',
         'Per Dominum eiusdem',
         'Qui tecum eiusdem',
+        'Pater_noster1',
+        ('Commune/C9', 'Oratio 21'),
+        ('Commune/C9', 'Conclusio'),
+        ('Commune/C9', 'Oratio_Fid'),
     ]
     if key is None:
         return None
@@ -345,9 +351,12 @@ def make_out_key(key, do_basename):
         out_key = 'psalterium/%s/ad-vesperas/versiculum' % (util.day_ids[day],)
     elif key == 'Gloria':
         out_key = 'versiculi/gloria-patri-post-psalmum'
-    elif key in versicle_keys or key in post_process_keys:
+    elif key == 'Requiem':
+        out_key = 'versiculi/requiem-aeternam-post-psalmum'
+    elif key in versicle_keys or any(entry in post_process_keys
+                                     for entry in [key, (do_basename, key)]):
         basename = key.replace(' ', '-').lower()
-        prefix = 'post-process' if key in post_process_keys else 'versiculi'
+        prefix = 'versiculi' if key in versicle_keys else 'post-process'
         out_key = '%s/%s' % (prefix, basename,)
     elif key == 'Name':
         # St Valentine happens to be in the genitive, although I don't think
@@ -582,10 +591,9 @@ def merge_do_propers(propers, redirections, do_redirections, generic,
 
 
 def post_process(propers, key):
-    components = key.split('/')
-    assert len(components) == 2
-
-    name = components[1]
+    # XXX: This is nasty.  "post-process/" occurs between the base (i.e. the
+    # bit that came from the DO filename) and the translated key.
+    name = re.sub(r'post-process/', '', key)
     val = propers[key]
 
     # XXX: Doing this unconditionally is a bit rash.
@@ -600,6 +608,22 @@ def post_process(propers, key):
     elif name == 'fidelium-animae':
         propers['versiculi/fidelium-animae'] = val[0]
         propers['versiculi/amen'] = val[1]
+    elif name == 'pater_noster1':
+        propers['orationes/pater-noster-secreto'] = [val[0]]
+        propers['orationes/et-ne-nos-inducas'] = val[1:]
+    elif name == 'commune/C9/oratio-21':
+        propers['officium-defunctorum/preces'] = val[3:7]
+    elif name == 'commune/C9/conclusio':
+        propers['versiculi/requiem'] = val[:2]
+        propers['versiculi/requiescant'] = val[2:]
+    elif name == 'commune/C9/oratio_fid':
+        # We're overriding the prayer here, as the one specified by DO consists
+        # of two @-refs, which we can't handle.  Check that it is in fact there
+        # already, so we don't clobber it later.  And: XXX: This is completely
+        # spurious.
+        new_key = 'commune/C9/oratio_a_porta'
+        assert new_key in propers
+        propers[new_key] = val[-2:]
     elif name in [
         'per-dominum',
         'per-eundem',
@@ -668,10 +692,8 @@ def propers(calendar_data, options, do_rubric_name):
     propers['psalterium/pasc/ad-vesperas/antiphonae'] = propers['daymp-laudes'][-1].split(';;')[0]
 
     for key in list(propers.keys()):
-        if key.startswith('post-process'):
+        if 'post-process' in key:
             post_process(propers, key)
-        else:
-            assert 'post-process' not in key
 
     # We omit "Per Dominum" here, because that's the default.
     known_conclusions = {

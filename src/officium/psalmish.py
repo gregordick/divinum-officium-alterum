@@ -9,16 +9,18 @@ class Psalmish(ABC):
 
     @property
     @abstractmethod
-    def gloria(self):
+    def conclusion(self):
         raise NotImplementedError("This method should be overridden.")
 
 
 class PsalmishWithGloria(Psalmish):
-    gloria = True
-
+    conclusion = 'versiculi/gloria-patri-post-psalmum'
 
 class PsalmishWithoutGloria(Psalmish):
-    gloria = False
+    conclusion = None
+
+class PsalmishWithRequiem(Psalmish):
+    conclusion = 'versiculi/requiem-aeternam-post-psalmum'
 
 
 labels = {

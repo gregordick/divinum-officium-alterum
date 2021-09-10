@@ -4,6 +4,8 @@ from . import psalmish
 from . import util
 
 class Vespers:
+    default_psalmish_class = parts.PsalmishWithGloria
+
     def __init__(self, date, generic_data, index, calendar_resolver, season,
                  office, concurring, commemorations):
         self._date = date
@@ -68,11 +70,17 @@ class Vespers:
     def lookup_main(self, *items):
         return self.lookup(self._office, self._is_first, *items)
 
-    def psalmody(self, antiphon_class):
+    def psalmody(self, antiphon_class=parts.Antiphon):
         antiphons = self.lookup_main('antiphonae')
         psalms = self.lookup_main('psalmi')
         yield parts.Psalmody(antiphons, self._generic_data[psalms],
-                             self._primary_template_context, antiphon_class)
+                             self._primary_template_context, antiphon_class,
+                             self.default_psalmish_class)
+
+    def versicle_and_response(self, vr_class=parts.VersicleWithResponse):
+        versicle_pair = self.lookup_main('versiculum')
+        yield parts.StructuredLookup(versicle_pair, vr_class,
+                                     self._primary_template_context)
 
     def chapter_hymn_and_verse(self, vr_class):
         yield parts.StructuredLookup(self.lookup_main('capitulum'),
@@ -80,18 +88,33 @@ class Vespers:
                                      self._primary_template_context)
         yield parts.StructuredLookup(self.lookup_main('hymnus'),
                                      parts.Hymn, self._primary_template_context)
-        versicle_pair = self.lookup_main('versiculum')
-        yield parts.StructuredLookup(versicle_pair, vr_class,
-                                     self._primary_template_context)
+        yield from self.versicle_and_response(vr_class)
 
-    def magnificat(self, antiphon_class):
+    def magnificat(self, antiphon_class=parts.Antiphon):
         path = self.lookup_main('ad-magnificat')
         mag_ant = parts.StructuredLookup(path, antiphon_class,
                                          self._primary_template_context)
         # XXX: Slashes.
-        mag = psalmish.PsalmishWithGloria('ad-vesperas/magnificat')
+        mag = self.default_psalmish_class('ad-vesperas/magnificat')
         yield parts.PsalmishWithAntiphon(mag_ant, [mag],
                                          self._primary_template_context)
+
+    def pater(self):
+        yield parts.StructuredLookup('orationes/pater-noster-secreto',
+                                     template_context=self._primary_template_context)
+        yield parts.StructuredLookup('orationes/et-ne-nos-inducas',
+                                     parts.VersicleWithResponse,
+                                     self._primary_template_context)
+
+    def preces(self):
+        yield from self.pater()
+        yield parts.StructuredLookup('officium-defunctorum/preces',
+                                     parts.VersicleWithResponse,
+                                     self._primary_template_context)
+        # XXX: Elide when necessary.
+        yield parts.StructuredLookup('versiculi/domine-exaudi',
+                                     parts.VersicleWithResponse,
+                                     self._primary_template_context)
 
     def oration(self):
         oration_path = self.lookup_main('oratio-super-populum', 'oratio')
@@ -197,8 +220,29 @@ class HolySaturdayVespers(Vespers):
         yield from self.oration()
         yield from self.conclusion()
 
+
 class EasterOctaveVespers(Vespers):
     def chapter_hymn_and_verse(self, vr_class):
         yield parts.StructuredLookup(self.lookup_main('haec-dies'),
                                      parts.Antiphon,
                                      self._primary_template_context)
+
+
+class VespersOfTheDead(Vespers):
+    default_psalmish_class = psalmish.PsalmishWithRequiem
+
+    def resolve(self):
+        yield from self.psalmody()
+        yield from self.versicle_and_response()
+        yield from self.magnificat()
+        yield from self.preces()
+        yield from self.oration()
+        yield from self.conclusion()
+
+    def conclusion(self):
+        yield parts.Group([
+            parts.StructuredLookup('versiculi/requiem',
+                                   parts.VersicleWithResponse),
+            parts.StructuredLookup('versiculi/requiescant',
+                                   parts.VersicleWithResponse),
+        ])

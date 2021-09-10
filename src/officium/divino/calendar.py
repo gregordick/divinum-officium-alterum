@@ -9,6 +9,7 @@ from officium.offices import (
     LentenFeria,
     LentenSunday,
     OctaveDay,
+    OfTheDead,
     Sunday,
     SundayAfterPentecost,
     Vigil,
@@ -205,7 +206,7 @@ class CalendarResolverDA(CalendarResolver):
     @classmethod
     def has_second_vespers(cls, office, date):
         return all([
-            not isinstance(office, Vigil),
+            not isinstance(office, (OfTheDead, Vigil)),
             isinstance(office, Feria) or office.rite > Rite.SIMPLE,
             super().has_second_vespers(office, date),
         ])
@@ -235,6 +236,18 @@ class CalendarResolverDA(CalendarResolver):
     def concurrence_resolution(cls, preceding, following, date):
         preceding_conc_rank = cls.concurrence_rank(preceding)
         following_conc_rank = cls.concurrence_rank(following)
+
+        assert not isinstance(preceding, OfTheDead)
+        if isinstance(following, OfTheDead):
+            # This needs a bit of explanation.  Vespers for the dead never beat
+            # vespers of the preceding, but Divino introduced compline for All
+            # Souls', said in place of compline of the preceding.  It's the
+            # caller's responsibility to do special handling for compline when
+            # the resolution is APPEND.
+            assert preceding_conc_rank <= following_conc_rank
+
+            # Vespers for the dead are said after vespers of the preceding.
+            return (preceding, Resolution.APPEND)
 
         if preceding_conc_rank < following_conc_rank:
             # Office of preceding. What to do with the following?

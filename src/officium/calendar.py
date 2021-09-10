@@ -41,6 +41,7 @@ class Resolution(enum.Enum):
     COMMEMORATE = enum.auto()
     OMIT = enum.auto()
     TRANSLATE = enum.auto()
+    APPEND = enum.auto()
 
 
 class CalendarResolver(ABC):
@@ -377,6 +378,8 @@ class CalendarResolver(ABC):
             return offices.Vigil
         elif desc['qualitas'] == 'officium sanctae mariae in sabbato':
             return offices.BVMOnSaturday
+        elif desc['qualitas'] == 'defunctorum':
+            return offices.OfTheDead
         assert False, desc['qualitas']
 
     @classmethod
@@ -533,7 +536,7 @@ class CalendarResolver(ABC):
             assert concurring, date
             office = concurring[0]
 
-        second_vespers = occurring and office is occurring[0]
+        second_vespers = office in occurring
 
         # Should we keep an office that concurs with this one?
         def keep(other):
@@ -561,15 +564,30 @@ class CalendarResolver(ABC):
             season, _, _ = self.split_calpoint(calpoint)
             season = season.lower()
 
-        hour_classes = self.hour_classes(office)
+        vespers_offices = [office]
+        # Handle the case where two offices are said together.  We assume that
+        # this can only happen when the office is of the preceding.
+        if (occurring and concurring and
+            office is occurring[0] and
+            concurring[0] in commemorations):
+            _, resn = self.concurrence_resolution(office, concurring[0], date)
+            if resn == Resolution.APPEND:
+                vespers_offices.append(concurring[0])
+                commemorations = [c for c in commemorations
+                                  if c is not concurring[0]]
 
-        vespers = (hour_classes.second_vespers if second_vespers
-                   else hour_classes.first_vespers)
+        hour_classes = self.hour_classes(office)
+        vespers_classeses = [self.hour_classes(x) for x in vespers_offices]
+        vespers_classes = [
+            vc.second_vespers if ofc in occurring else vc.first_vespers
+            for (vc, ofc) in zip(vespers_classeses, vespers_offices)
+        ]
 
         return OrderedDict([
-            ('vespers', [vespers(date, self._data_map, self._index, self,
-                                 season, office, concurring,
-                                 self.vespers_commem_filter(commemorations,
-                                                            date,
-                                                            concurring))]),
+            ('vespers', [cls(date, self._data_map, self._index, self, season,
+                             vespers_office, concurring,
+                             self.vespers_commem_filter(commemorations, date,
+                                                        concurring))
+                         for (cls, vespers_office) in zip(vespers_classes,
+                                                          vespers_offices)]),
         ])

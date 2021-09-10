@@ -14,6 +14,11 @@ hours_map = {
             first_vespers=vespers.HolySaturdayVespers,
             second_vespers=vespers.EasterOctaveVespers,
         ),
+    'defunctorum':
+        Hours(
+            first_vespers=vespers.VespersOfTheDead,
+            second_vespers=vespers.VespersOfTheDead,
+        ),
     'communis':
         Hours(
             first_vespers=vespers.Vespers,

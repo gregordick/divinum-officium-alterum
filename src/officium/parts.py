@@ -4,7 +4,7 @@ import re
 import jinja2
 
 from officium import data
-from officium.psalmish import descriptor_to_psalmish
+from officium.psalmish import descriptor_to_psalmish, PsalmishWithGloria
 
 class Group:
     child_default = itertools.cycle([str])
@@ -68,7 +68,7 @@ class VersicleWithAlleluia(SingleAlleluiaMixin, Versicle): pass
 class VersicleResponse(Group): pass
 class VersicleResponseWithAlleluia(SingleAlleluiaMixin, VersicleResponse): pass
 class VersicleWithResponse(Group):
-    child_default = [Versicle, VersicleResponse]
+    child_default = itertools.cycle([Versicle, VersicleResponse])
 class VersicleWithResponseWithAlleluia(Group):
     child_default = [VersicleWithAlleluia, VersicleResponseWithAlleluia]
 class Oration(Group): pass
@@ -211,19 +211,21 @@ class PsalmishWithAntiphon:
                 the_filter = None
             yield StructuredLookup(key, PsalmVerse, self.template_context,
                                    list_root=True, raw_filter=the_filter)
-            if psalmish.gloria:
-                yield StructuredLookup('versiculi/gloria-patri-post-psalmum',
-                                       PsalmVerse, self.template_context,
-                                       list_root=True)
+            if psalmish.conclusion:
+                yield StructuredLookup(psalmish.conclusion, PsalmVerse,
+                                       self.template_context, list_root=True)
         yield self.antiphon
 
 
 class Psalmody:
-    def __init__(self, antiphons_path, psalms, template_context, antiphon_class=Antiphon):
+    def __init__(self, antiphons_path, psalms, template_context,
+                 antiphon_class=Antiphon,
+                 default_psalm_class=PsalmishWithGloria):
         self.antiphons_path = antiphons_path
         self.psalms = psalms
         self.template_context = template_context
         self.antiphon_class = antiphon_class
+        self.default_psalm_class = default_psalm_class
 
     def resolve(self, lang_data):
         lookup = StructuredLookup(self.antiphons_path, self.antiphon_class,
@@ -238,9 +240,12 @@ class Psalmody:
             ]
 
         return [Group(
-            PsalmishWithAntiphon(antiphon, [descriptor_to_psalmish(psalm)
-                                            for psalm in psalms],
-                                 self.template_context)
+            PsalmishWithAntiphon(
+                antiphon,
+                [descriptor_to_psalmish(psalm, self.default_psalm_class)
+                 for psalm in psalms],
+                self.template_context,
+            )
             for (antiphon, psalms) in zip(antiphons, self.psalms)
         )]
 
