@@ -7,6 +7,7 @@ datafiles.
 # XXX: Some of this is pretty unpleasant.
 
 import argparse
+import itertools
 import os
 import re
 import sys
@@ -116,6 +117,8 @@ def make_descriptor(key, calcalc_lines, do_rubric_name):
                 'simplex': 5,
             }[m.group(1)]
 
+        if re.search(r'Quad6-[456]', key):
+            desc['officium'] = 'tridui-sacri'
         if 'Pasc0' in key:
             desc['officium'] = 'octavae-paschalis'
     else:
@@ -171,13 +174,25 @@ def _parse(f, options, do_rubric_name):
             accumulator += line[:-1] + ' '
             continue
 
+        # Block conditionals.  XXX: This isn't complete.  Consider handling
+        # this after having read in all sections.
         if re.match(r'[(].*[)]$', line):
-            rubric_squashed = not (
-                do_rubric_expression_matches(line, do_rubric_name) or
-                'deinde' in line
-            )
-            if rubric_squashed and options.verbose:
-                print('SQUASH:', line, file=sys.stderr)
+            cond_matches = do_rubric_expression_matches(line, do_rubric_name)
+            if 'omittitur' in line:
+                if section and cond_matches:
+                    section.pop()
+            elif 'omittuntur' in line:
+                # XXX: Should only clobber as far back as the beginning of the
+                # block.
+                if cond_matches:
+                    section = []
+            else:
+                rubric_squashed = not (
+                     cond_matches or
+                    'deinde' in line
+                )
+                if rubric_squashed and options.verbose:
+                    print('SQUASH:', line, file=sys.stderr)
             continue
 
         m = re.match(r'\[(.*)\].*' + do_rubric_name, line)
@@ -471,8 +486,54 @@ def name_case(do_basename, do_key):
     return 'genitivo'
 
 
-def merge_do_section(propers, redirections, do_redirections, generic,
-                     do_basename, out_key_base, do_key, value):
+def apply_subs_to_str(subs, thing):
+    subbed = False
+    for pat, repl in re.findall(r's/([^/]*?)/([^/]*?)/', subs or ''):
+        try:
+            thing = re.sub(pat, repl, thing)
+        except re.error:
+            continue
+        subbed = True
+    if subs and not subbed:
+        print("WARNING: failed to parse substitution", subs, file=sys.stderr)
+    return thing
+
+
+inclusion_regex = r'@([^:]*)(?::([^:]*))?(?::([^:]*))?'
+def apply_inclusion(line, do_propers_base, do_basename, do_key, do_rubric_name,
+                    options):
+    try:
+        basename, key, subs = re.match(inclusion_regex, line).groups()
+        key = key or do_key
+        do_propers = load_do_file(do_propers_base, do_rubric_name, options,
+                                  basename or do_basename)
+        included = do_propers[key]
+    except (AttributeError, FileNotFoundError, KeyError):
+        yield line
+        return
+    for included_line in included:
+        if re.match(inclusion_regex, included_line):
+            sublines = apply_inclusion(included_line, do_propers_base,
+                                       basename, key, do_rubric_name, options)
+        else:
+            sublines = [included_line]
+        m = re.match(r'(\d+)(?:-(\d+))?$', subs or '')
+        if m:
+            # Line-range.
+            start, stop = m.groups()
+            stop = stop or start
+            for subline in itertools.islice(sublines, int(start),
+                                            int(stop) + 1):
+                yield subline
+        else:
+            # Substitutions.
+            for subline in sublines:
+                yield apply_subs_to_str(subs, subline)
+
+
+def merge_do_section(propers, redirections, do_redirections, generic, options,
+                     do_propers_base, do_rubric_name, do_basename,
+                     out_key_base, do_key, value):
     if do_key == 'Rank':
         m = re.search(r'\b(ex|vide)\b\s+\b(.*)\b\s*$', value[0])
         if m:
@@ -501,18 +562,28 @@ def merge_do_section(propers, redirections, do_redirections, generic,
     else:
         out_path = make_full_path(out_key_base, make_out_key(do_key,
                                                              do_basename))
-        m = (re.match(r'@([^:]*)(?::([^:]*))?(?::([^:]*))?', value[0]) if value
-             else None)
+        # Handle inclusions.  We treat single-line values specially: if these
+        # contain an inclusion, we set up an indirect reference to resolve that
+        # inclusion, rather than expanding it inline.
+        if len(value) == 1:
+            m = re.match(inclusion_regex, value[0])
+        else:
+            value = [x
+                     for mapped in (apply_inclusion(line, do_propers_base,
+                                                    do_basename, do_key,
+                                                    do_rubric_name, options)
+                                    for line in value)
+                     for x in mapped]
+            m = None
         if m:
             redir_basename, redir_key, subs = m.groups()
             if not redir_basename:
                 redir_basename = do_basename
             if not redir_key:
                 redir_key = do_key
-            do_redirections[out_path] = (redir_basename, redir_key)
-            assert 'post-process' not in out_path
 
-            for sub in (subs or '').split():
+            sub_list = []
+            for sub in re.findall(r's/[^/]*?/[^/]*?/', subs or ''):
                 names = None
                 m = re.match(r's/N\\\. et N\\\./([^/]*)', sub)
                 if m:
@@ -527,6 +598,19 @@ def merge_do_section(propers, redirections, do_redirections, generic,
                     sub_out_path = make_full_path(out_key_base,
                                                   'nomen/%s' % (case,))
                     propers[sub_out_path] = names
+                else:
+                    sub_list.append(sub)
+
+            assert 'post-process' not in out_path
+            if sub_list:
+                # We have unhandled substitutions, so expand the inclusion
+                # now.
+                value = list(apply_inclusion(value[0], do_propers_base,
+                                             do_basename, do_key,
+                                             do_rubric_name, options))
+                propers[out_path] = value
+            else:
+                do_redirections[out_path] = (redir_basename, redir_key)
         else:
             template_var = 'officium.nomen_' + name_case(do_basename, do_key)
             # XXX: Latin-specific.
@@ -538,6 +622,9 @@ def merge_do_section(propers, redirections, do_redirections, generic,
             ]
             value = [re.sub(r'\bN[.]\B', '{{%s}}' % (template_var,), x)
                      for x in value]
+            # XXX: Doing this unconditionally is a bit rash.
+            value = [re.sub(r'^[VR]\. ', '', line) for line in value]
+
             if out_path.endswith('/antiphonae'):
                 # Separate out the psalms.
                 try:
@@ -575,29 +662,46 @@ def merge_do_section(propers, redirections, do_redirections, generic,
             propers[out_path] = value
 
 
-def merge_do_propers(propers, redirections, do_redirections, generic,
-                     do_propers_base, do_basename, out_key_base, options,
-                     do_rubric_name):
+def load_do_file(do_propers_base, do_rubric_name, options, do_basename):
+    assert do_basename
     do_filename = os.path.join(do_propers_base, do_basename + '.txt')
     try:
         do_propers = parse(do_filename, options, do_rubric_name)
     except FileNotFoundError:
         print("Not found: %s" % (do_filename,), file=sys.stderr)
+        raise
+    return do_propers
+
+
+def merge_do_propers(propers, redirections, do_redirections, generic,
+                     do_propers_base, do_basename, out_key_base, options,
+                     do_rubric_name):
+    try:
+        do_propers = load_do_file(do_propers_base, do_rubric_name, options,
+                                  do_basename)
+    except FileNotFoundError:
         return False
     for (do_key, value) in do_propers.items():
         merge_do_section(propers, redirections, do_redirections, generic,
-                         do_basename, out_key_base, do_key, value)
+                         options, do_propers_base, do_rubric_name, do_basename,
+                         out_key_base, do_key, value)
     return True
 
 
+triduum_days = [
+    'feria-quinta-in-cena-domini',
+    'feria-sexta-in-parasceve',
+    'feria-sexta-in-passione-et-morte-domini',
+    'sabbato-sancto',
+]
 def post_process(propers, key):
-    # XXX: This is nasty.  "post-process/" occurs between the base (i.e. the
-    # bit that came from the DO filename) and the translated key.
-    name = re.sub(r'post-process/', '', key)
+    if 'post-process' in key:
+        # XXX: This is nasty.  "post-process/" occurs between the base (i.e.
+        # the bit that came from the DO filename) and the translated key.
+        name = re.sub(r'post-process/', '', key)
+    else:
+        name = key
     val = propers[key]
-
-    # XXX: Doing this unconditionally is a bit rash.
-    val = [re.sub(r'^[VR]\. ', '', line) for line in val]
 
     if name == 'dominus':
         propers['versiculi/dominus-vobiscum'] = val[:2]
@@ -634,10 +738,12 @@ def post_process(propers, key):
     ]:
         # XXX: Should put these somewhere other than the root.
         propers[name] = val[0]
-    else:
-        assert False, name
+    elif any(name.endswith('%s/oratio' % (day,)) for day in triduum_days):
+        propers[name] = val[-3:]
+        propers[re.sub(r'oratio$', 'christus-factus-est', name)] = val[:1]
 
-    del propers[key]
+    if name != key:
+        del propers[key]
 
 
 def propers(calendar_data, options, do_rubric_name):
@@ -692,8 +798,7 @@ def propers(calendar_data, options, do_rubric_name):
     propers['psalterium/pasc/ad-vesperas/antiphonae'] = propers['daymp-laudes'][-1].split(';;')[0]
 
     for key in list(propers.keys()):
-        if 'post-process' in key:
-            post_process(propers, key)
+        post_process(propers, key)
 
     # We omit "Per Dominum" here, because that's the default.
     known_conclusions = {
@@ -735,6 +840,10 @@ def propers(calendar_data, options, do_rubric_name):
             dest = make_officium_redir(do_basename, do_key)
             if dest is not None:
                 converted_redirections[redir_key] = dest
+                if all(x.endswith('/antiphonae') for x in [dest, redir_key]):
+                    psalm_redir_key = redir_key[:-len('antiphonae')] + 'psalmi'
+                    psalm_dest = dest[:-len('antiphonae')] + 'psalmi'
+                    converted_redirections[psalm_redir_key] = psalm_dest
             else:
                 remaining_redirections[redir_key] = (do_basename, do_key)
 

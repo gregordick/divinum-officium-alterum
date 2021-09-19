@@ -246,3 +246,34 @@ class VespersOfTheDead(Vespers):
             parts.StructuredLookup('versiculi/requiescant',
                                    parts.VersicleWithResponse),
         ])
+
+
+class TriduumVespers(Vespers):
+    default_psalmish_class = psalmish.PsalmishWithoutGloria
+
+    def resolve(self):
+        yield from self.psalmody()
+        yield from self.magnificat()
+        yield from self.christus_factus_est()
+        yield from self.miserere()
+        yield from self.oration()
+
+    def christus_factus_est(self):
+        yield parts.StructuredLookup(self.lookup_main('christus-factus-est'),
+                                     parts.Antiphon,
+                                     self._primary_template_context)
+
+    def miserere(self):
+        yield parts.StructuredLookup('psalterium/psalmi/50', parts.PsalmVerse,
+                                     self._primary_template_context,
+                                     list_root=True)
+
+    def oration(self):
+        oration_path = self.lookup_main('oratio')
+        oration = parts.StructuredLookup(oration_path, parts.Oration,
+                                         self._primary_template_context)
+        yield parts.Group([
+            oration,
+            parts.oration_conclusion(oration_path, self._generic_data),
+            parts.amen(),
+        ])

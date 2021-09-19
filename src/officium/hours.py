@@ -24,4 +24,10 @@ hours_map = {
             first_vespers=vespers.Vespers,
             second_vespers=vespers.Vespers,
         ),
+    'tridui-sacri':
+        Hours(
+            # XXX: first_vespers is a nonsense here.
+            first_vespers=vespers.TriduumVespers,
+            second_vespers=vespers.TriduumVespers,
+        ),
 }
