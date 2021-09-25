@@ -42,6 +42,12 @@ class Office:
         return True
 
     @property
+    def temporal(self):
+        # XXX: See the comment above TemporalOffice.  And de_tempore in the
+        # root of the descriptor might not be the cleanest way to do it.
+        return isinstance(self, TemporalOffice) or self.desc.get('de_tempore')
+
+    @property
     def rank(self):
         return self.desc['classis']
 

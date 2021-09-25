@@ -7,12 +7,13 @@ class Vespers:
     default_psalmish_class = parts.PsalmishWithGloria
 
     def __init__(self, date, generic_data, index, calendar_resolver, season,
-                 office, concurring, commemorations):
+                 season_keys, office, concurring, commemorations):
         self._date = date
         self._generic_data = generic_data
         self._index = index
         self._calendar_resolver = calendar_resolver
         self._season = season
+        self._season_keys = season_keys
         self._office = office
         self._is_first = office in concurring
 
@@ -35,6 +36,16 @@ class Vespers:
             lambda item, key=key: '%s/%s' % (key, item)
             for key in office.keys
         ]
+        season = [
+            lambda item, key=key: 'proprium/%s/%s' % (key, item)
+            for key in self._season_keys
+        ]
+        # Seasonal keys take precedence over office keys for and only for
+        # temporal offices.
+        if office.temporal:
+            paths = season + paths
+        else:
+            paths += season
         # Fall back to propers from the preceding Sunday.  XXX: This is wrong,
         # in two respects: firstly, it should be any non-Sunday temporal
         # office, and not necessarily a feria; and secondly, slicing and dicing

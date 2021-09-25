@@ -774,6 +774,14 @@ def propers(calendar_data, options, do_rubric_name):
         out_key_base = 'proprium/%s' % (descs[0].get('titulus', calpoint),)
         merge()
 
+    # August-November weeks.
+    for day in ('%02d%d-%d' % x
+                for x in itertools.product(range(8, 12), range(1, 6),
+                                           range(0, 7))):
+        do_basename = os.path.join('Tempora', day)
+        out_key_base = 'proprium/%s' % (day,)
+        merge()
+
     for common in (key[8:] for key in redirections.values()
                    if key.startswith('commune/')):
         do_basename = os.path.join('Commune', common)

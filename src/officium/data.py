@@ -8,15 +8,13 @@ class Data:
         self.redirections = {}
 
     def lookup(self, keys):
-        first = None # XXX: See below
+        keys = list(keys) # XXX: See below
         for key in keys:
-            if first is None:
-                first = key
             for real_key in self.gen_redirections(key):
                 if real_key in self.dictionary:
                     return real_key
         # XXX: For bringup, return a string rather than raising.
-        return "NOT FOUND: " + first
+        return "NOT FOUND: %s " % (keys,)
         raise KeyError(keys)
 
     def get(self, *args, **kwargs):

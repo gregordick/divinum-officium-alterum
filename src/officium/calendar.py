@@ -162,6 +162,11 @@ class CalendarResolver(ABC):
         return (month, week, date.day_of_week)
 
     @classmethod
+    def reading_day_str(cls, date):
+        reading_day = cls.reading_day(date)
+        return '%02d%d-%d' % reading_day if reading_day is not None else None
+
+    @classmethod
     def temporal_week(cls, date):
         # Round down to Sunday.
         sunday = date - date.day_of_week
@@ -255,9 +260,9 @@ class CalendarResolver(ABC):
         ]
 
         # nth x-day _of_ the month.
-        reading_day = self.reading_day(date)
+        reading_day = self.reading_day_str(date)
         if reading_day is not None:
-            calpoints.append('%02d%d-%d' % reading_day)
+            calpoints.append(reading_day)
 
         # Last x-day.
         if date.day_of_week == 0 and days_in_month - date.day < 7:
@@ -564,6 +569,13 @@ class CalendarResolver(ABC):
             season, _, _ = self.split_calpoint(calpoint)
             season = season.lower()
 
+        # Get seasonal keys, which in practice means the months from August to
+        # November.  These are strictly weekly, so only for Sundays do we have
+        # first Vespers.
+        reading_day = self.reading_day_str(date + 1 if date.day_of_week == 6
+                                           else date)
+        season_keys = [reading_day] if reading_day else []
+
         vespers_offices = [office]
         # Handle the case where two offices are said together.  We assume that
         # this can only happen when the office is of the preceding.
@@ -585,7 +597,7 @@ class CalendarResolver(ABC):
 
         return OrderedDict([
             ('vespers', [cls(date, self._data_map, self._index, self, season,
-                             vespers_office, concurring,
+                             season_keys, vespers_office, concurring,
                              self.vespers_commem_filter(commemorations, date,
                                                         concurring))
                          for (cls, vespers_office) in zip(vespers_classes,
