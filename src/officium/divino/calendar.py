@@ -286,6 +286,13 @@ class CalendarResolverDA(CalendarResolver):
                 following.octave_id == preceding.octave_id):
                 resolution = Resolution.OMIT
 
+            # Don't commemorate the preceding feria on a Sunday.  Note that
+            # this is not quite the same as saying that Saturdays don't have
+            # vespers, because Sundays can be anticipated and resumed.
+            elif (isinstance(following, Sunday) and
+                  isinstance(preceding, Feria)):
+                resolution = Resolution.OMIT
+
             # Check for some days that are low-ranking in concurrence but
             # nonetheless are always commemorated when they lose.
             elif ((isinstance(preceding, Feria) and
