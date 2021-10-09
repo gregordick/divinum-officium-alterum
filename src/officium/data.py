@@ -1,3 +1,6 @@
+import copy
+
+
 class DataValidationError(Exception):
     pass
 
@@ -28,12 +31,12 @@ class Data:
 
     def create(self, d):
         for key in d:
-            self.dictionary[key] = d[key]
+            self.dictionary[key] = copy.deepcopy(d[key])
 
     def append(self, d):
         for key in d:
             entries = self.dictionary.setdefault(key, [])
-            entries += d[key]
+            entries += copy.deepcopy(d[key])
 
     def redirect(self, redirection_dict):
         for (redirect_name, target) in redirection_dict.items():
