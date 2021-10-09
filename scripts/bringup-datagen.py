@@ -23,6 +23,15 @@ def do_rubric_expression_matches(expression, do_rubric_name):
     return do_rubric_name.lower() in expression.lower()
 
 
+def add_rubric(desc, rubric):
+    rubrics = desc.setdefault('rubricae', [])
+    rubrics.append(rubric)
+
+
+def terminatur_post_nonam(desc):
+    add_rubric(desc, 'officium terminatur post nonam')
+
+
 def make_descriptor(key, calcalc_lines, do_rubric_name):
     desc = {}
 
@@ -121,6 +130,9 @@ def make_descriptor(key, calcalc_lines, do_rubric_name):
             desc['officium'] = 'tridui-sacri'
         if 'Pasc0' in key:
             desc['officium'] = 'octavae-paschalis'
+        if key.endswith('093-6') or (do_rubric_name != '1960' and
+                                     re.search(r'093-[35]$', key)):
+            terminatur_post_nonam(desc)
     else:
         # No rankline.
         desc['qualitas'] = 'dominica' if key.endswith('-0') else 'feria'
@@ -129,8 +141,7 @@ def make_descriptor(key, calcalc_lines, do_rubric_name):
         if remaining_line.startswith('octid='):
             desc['octavae_nomen'] = remaining_line[6:].lower()
         elif remaining_line == 'Officium terminatur post Nonam':
-            rubrics = desc.setdefault('rubricae', [])
-            rubrics.append('officium terminatur post nonam')
+            terminatur_post_nonam(desc)
 
     return desc
 
