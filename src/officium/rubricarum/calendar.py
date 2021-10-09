@@ -8,6 +8,7 @@ from officium.offices import (
     LentenFeria,
     LentenSunday,
     OctaveDay,
+    OfTheDead,
     PassiontideFeria,
     PassiontideSunday,
     SeptuagesimatideFeria,
@@ -35,7 +36,8 @@ class CalendarResolver1962(CalendarResolver):
         # the weakly-preceding Sunday is well-behaved.
         return date - date.day_of_week
 
-    def reading_day(self, date):
+    @classmethod
+    def reading_day(cls, date):
         reading_day = super().reading_day(date)
         if reading_day is None:
             return None
@@ -214,10 +216,10 @@ class CalendarResolver1962(CalendarResolver):
 
     @classmethod
     def has_second_vespers(cls, office, date):
-        return all(
+        return all([
             not isinstance(office, Vigil),
             super().has_second_vespers(office, date),
-        )
+        ])
 
     @classmethod
     def privileged_commemoration(cls, office, date):
@@ -280,6 +282,7 @@ class CalendarResolver1962(CalendarResolver):
             Vigil: 2,
             WithinOctave: 2,
             OctaveDay: 2,
+            OfTheDead: 1,
         }
         if 'classis' not in desc:
             # XXX: This should be more sophisticated than a dict-lookup.
