@@ -307,6 +307,25 @@ class CalendarResolver(ABC):
             return (m.group(1), int(m.group(2)), int(m.group(3)))
         return None, None, None
 
+    @staticmethod
+    def doxology_path(doxology_basename):
+        return 'doxologiae/' + doxology_basename
+
+    @classmethod
+    def calpoint_doxology(cls, calpoint):
+        # We are intentionally lax in this regex to allow bringup scripts to
+        # abuse this function by passing in a key rather than a calpoint.
+        doxology = None
+        m = re.search(r'Pasc\d-\d', calpoint)
+        if m:
+            if 'Pasc1-0' <= m.group(0) <= 'Pasc5-3':
+                doxology = 'paschalis'
+            elif 'Pasc5-4' <= m.group(0) <= 'Pasc6-6':
+                doxology = 'ascensionis'
+            elif 'Pasc7-0' <= m.group(0) <= 'Pasc7-6':
+                doxology = 'pentecostes'
+        return cls.doxology_path(doxology) if doxology else None
+
     @classmethod
     def default_descriptor(cls, calpoint):
         desc = {
@@ -315,6 +334,9 @@ class CalendarResolver(ABC):
         calpoint_season, week, day = cls.split_calpoint(calpoint)
         if calpoint_season:
             desc['tempus'] = cls.season(calpoint_season, week, day)
+            doxology = cls.calpoint_doxology(calpoint)
+            if doxology:
+                desc['doxologia'] = doxology
             desc['hebdomada'] = week
             if desc['tempus'] in ['quad', 'passionis']:
                 desc['status'] = 'major'
@@ -522,6 +544,18 @@ class CalendarResolver(ABC):
 
         assert occurring or concurring, (date, today, tomorrow)
 
+        # Find the proper doxology, if any.
+        try:
+            # "First non-None doxology in all the offices, sorted sanctoral-
+            # first."  This makes no attempt to break ties between multiple
+            # sanctoral (or temporal) offices each having a doxology.
+            doxology = next(o.doxology
+                            for o in sorted(occurring + concurring,
+                                            key=lambda x: x.temporal)
+                            if o.doxology is not None)
+        except StopIteration:
+            doxology = None
+
         # Filter out omitted offices.
         for offices in [today, tomorrow, occurring, concurring]:
             if offices:
@@ -597,7 +631,7 @@ class CalendarResolver(ABC):
 
         return OrderedDict([
             ('vespers', [cls(date, self._data_map, self._index, self, season,
-                             season_keys, vespers_office, concurring,
+                             season_keys, doxology, vespers_office, concurring,
                              self.vespers_commem_filter(commemorations, date,
                                                         concurring))
                          for (cls, vespers_office) in zip(vespers_classes,

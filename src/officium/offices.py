@@ -45,7 +45,8 @@ class Office:
     def temporal(self):
         # XXX: See the comment above TemporalOffice.  And de_tempore in the
         # root of the descriptor might not be the cleanest way to do it.
-        return isinstance(self, TemporalOffice) or self.desc.get('de_tempore')
+        return bool(isinstance(self, TemporalOffice) or
+                    self.desc.get('de_tempore'))
 
     @property
     def rank(self):
@@ -95,6 +96,11 @@ class Office:
         """
         rubrics = self.desc.get('rubricae', [])
         return 'officium terminatur post nonam' in rubrics
+
+    @property
+    def doxology(self):
+        return self.desc.get('doxologia')
+
 
 class Feast(Office):
     @property

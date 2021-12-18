@@ -63,6 +63,17 @@ class HymnVerse(Group):
 class Hymn(Group):
     child_default = itertools.cycle([HymnVerse])
     title = 'hymnus'
+
+def HymnWithProperDoxology(doxology):
+    class _HymnWithProperDoxology(Hymn):
+        @classmethod
+        def transform(cls, contents, lang_data):
+            # XXX: This doesn't work with general iterables.
+            for content in contents[:-2]:
+                yield content
+            yield doxology
+    return _HymnWithProperDoxology
+
 class Versicle(Group): pass
 class VersicleWithAlleluia(SingleAlleluiaMixin, Versicle): pass
 class VersicleResponse(Group): pass
@@ -105,11 +116,11 @@ class TemplateContext:
 
 class StructuredLookup:
     # Classes that can be referred to by a label.
-    labelled_classes = {
+    default_labelled_classes = {
     }
 
     def __init__(self, path, default_class=Group, template_context=None,
-                 list_root=False, raw_filter=None):
+                 list_root=False, raw_filter=None, labelled_classes=None):
         self.path = path
         self.default_class = default_class
         if template_context is None:
@@ -117,6 +128,10 @@ class StructuredLookup:
         self.template_context = template_context
         self.list_root = list_root
         self.raw_filter = raw_filter
+        self.labelled_classes = dict(
+            self.default_labelled_classes,
+            **(labelled_classes or {})
+        )
 
     def __repr__(self):
         return '%s(%s, %s)' % (self.__class__.__name__, self.path,

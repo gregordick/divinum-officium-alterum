@@ -53,6 +53,8 @@ def make_descriptor(key, calcalc_lines, do_rubric_name):
             line = body
         filtered.append(line)
     calcalc_lines = filtered
+    if not calcalc_lines:
+        return
 
     if calcalc_lines and not calcalc_lines[0].startswith('rank='):
         desc['titulus'] = re.sub(r'\W+', '-', calcalc_lines.pop(0).lower())
@@ -125,14 +127,6 @@ def make_descriptor(key, calcalc_lines, do_rubric_name):
                 'communis': 4,
                 'simplex': 5,
             }[m.group(1)]
-
-        if re.search(r'Quad6-[456]', key):
-            desc['officium'] = 'tridui-sacri'
-        if 'Pasc0' in key:
-            desc['officium'] = 'octavae-paschalis'
-        if key.endswith('093-6') or (do_rubric_name != '1960' and
-                                     re.search(r'093-[35]$', key)):
-            terminatur_post_nonam(desc)
     else:
         # No rankline.
         desc['qualitas'] = 'dominica' if key.endswith('-0') else 'feria'
@@ -143,7 +137,27 @@ def make_descriptor(key, calcalc_lines, do_rubric_name):
         elif remaining_line == 'Officium terminatur post Nonam':
             terminatur_post_nonam(desc)
 
-    return desc
+    if re.search(r'Quad6-[456]', key):
+        desc['officium'] = 'tridui-sacri'
+    if 'Pasc0' in key:
+        desc['officium'] = 'octavae-paschalis'
+
+    doxology = None
+    if desc.get('octavae_nomen') == 'nat':
+        doxology = calendar.CalendarResolver.doxology_path('nativitatis')
+    elif desc.get('octavae_nomen') == 'epi':
+        doxology = calendar.CalendarResolver.doxology_path('epiphaniae')
+    else:
+        doxology = calendar.CalendarResolver.calpoint_doxology(key)
+    if doxology:
+        desc['doxologia'] = doxology
+
+    if key.endswith('093-6') or (do_rubric_name != '1960' and
+                                 re.search(r'093-[35]$', key)):
+        terminatur_post_nonam(desc)
+
+    assert len(desc) > 1 or desc.get('qualitas') != 'feria'
+    yield desc
 
 
 def make_descriptors(key, calcalc_lines, do_rubric_name):
@@ -157,14 +171,24 @@ def make_descriptors(key, calcalc_lines, do_rubric_name):
                 drop = True
             if not drop:
                 lines.append(line)
-        elif lines:
-            if not drop:
-                yield make_descriptor(key, lines, do_rubric_name)
+        else:
+            if lines and not drop:
+                yield from make_descriptor(key, lines, do_rubric_name)
                 yielded = True
             drop = False
             lines = []
     if lines or not yielded:
-        yield make_descriptor(key, lines, do_rubric_name)
+        yield from make_descriptor(key, lines, do_rubric_name)
+
+
+def expand_calendar_at_refs(raw_do_calendar):
+    def expand(lines):
+        for line in lines:
+            if line.startswith('@:'):
+                yield from expand(raw_do_calendar[line[2:]])
+            else:
+                yield line
+    return {k: list(expand(v)) for (k, v) in raw_do_calendar.items()}
 
 
 do_rubric_names = {
@@ -244,7 +268,7 @@ def make_calendar(raw, do_rubric_name):
     d = {
         'calendarium/' + k: list(make_descriptors('calendarium/' + k, v,
                                                   do_rubric_name))
-        for (k, v) in raw.items()
+        for (k, v) in expand_calendar_at_refs(raw).items()
     }
 
     assert d['calendarium/07-24'].pop(0)['titulus'] == 'in-vigilia-s-jacobi-apostoli'
@@ -389,6 +413,15 @@ def make_out_key(key, do_basename):
         # DO used it.  XXX: Merge this into name_case().
         out_key = ('nomen/genitivo' if do_basename.endswith('02-14')
                    else 'nomen/vocativo')
+    elif do_basename.endswith('Doxologies'):
+        name = {
+            'Nat': 'nativitatis',
+            'Epi': 'epiphaniae',
+            'Pasc': 'paschalis',
+            'Asc': 'ascensionis',
+            'Pent': 'pentecostes',
+        }.get(key, key)
+        out_key = 'doxologiae/' + name
     else:
         if not key in warn_keys:
             print("WARNING: Unrecognised key %s" % (key,), file=sys.stderr)
@@ -652,14 +685,24 @@ def merge_do_section(propers, redirections, do_redirections, generic, options,
             elif out_path.endswith('/hymnus'):
                 verse = []
                 verses = [verse]
+                variable_doxology = False
                 for line in value:
                     if line.strip() == '_':
                         verse = []
                         verses.append(verse)
                     else:
                         line = re.sub(r'^([{].*[}])?(v[.]\s*)?', '', line)
+                        if line.startswith('*'):
+                            line = re.sub(r'^[*]\s*', '', line)
+                            variable_doxology = True
                         verse.append(line)
-                value = verses
+                if variable_doxology:
+                    value = {
+                        'type': 'hymnus-cum-doxologia-mutabile',
+                        'content': verses,
+                    }
+                else:
+                    value = verses
             elif out_path.endswith('/haec-dies'):
                 value = [re.sub(r'^Ant\. |[*]\s*', '', x) for x in value]
             elif 'capitulum' in out_path:
@@ -782,6 +825,7 @@ def propers(calendar_data, options, do_rubric_name):
             'Sancti' if re.match(r'\d\d-\d\d$', calpoint) else 'Tempora',
             do_calpoint,
         )
+        # XXX: descs[0] is wrong.
         out_key_base = 'proprium/%s' % (descs[0].get('titulus', calpoint),)
         merge()
 
@@ -799,7 +843,7 @@ def propers(calendar_data, options, do_rubric_name):
         out_key_base = 'commune/%s' % (common,)
         merge()
 
-    for basename in ["Psalmi major", "Major Special", "Prayers"]:
+    for basename in ["Psalmi major", "Major Special", "Prayers", "Doxologies"]:
         do_basename = os.path.join('Psalterium', basename)
         out_key_base = None
         merge()

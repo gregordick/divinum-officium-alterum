@@ -7,7 +7,7 @@ class Vespers:
     default_psalmish_class = parts.PsalmishWithGloria
 
     def __init__(self, date, generic_data, index, calendar_resolver, season,
-                 season_keys, office, concurring, commemorations):
+                 season_keys, doxology, office, concurring, commemorations):
         self._date = date
         self._generic_data = generic_data
         self._index = index
@@ -26,6 +26,12 @@ class Vespers:
         # Template context for the office of the day.  TODO: Handle offices
         # that are from the chapter of the following.
         self._primary_template_context = self.make_template_context(self._office)
+
+        if doxology:
+            self._doxology = parts.StructuredLookup(doxology, parts.HymnVerse,
+                                                    self._primary_template_context)
+        else:
+            self._doxology = None
 
     def lookup_order(self, office, items):
         # XXX: The use of lambdas here is probably overengineered -- we could
@@ -97,8 +103,18 @@ class Vespers:
         yield parts.StructuredLookup(self.lookup_main('capitulum'),
                                      parts.Chapter,
                                      self._primary_template_context)
-        yield parts.StructuredLookup(self.lookup_main('hymnus'),
-                                     parts.Hymn, self._primary_template_context)
+        if self._doxology is not None:
+            mutable_hymn_cls = parts.HymnWithProperDoxology(self._doxology)
+        else:
+            mutable_hymn_cls = parts.Hymn
+        # XXX: Factor this out so that it can be used anywhere we might need to
+        # look up a hymn.
+        yield parts.StructuredLookup(self.lookup_main('hymnus'), parts.Hymn,
+                                     self._primary_template_context,
+                                     labelled_classes={
+                                         'hymnus-cum-doxologia-mutabile':
+                                             mutable_hymn_cls,
+                                     })
         yield from self.versicle_and_response(vr_class)
 
     def magnificat(self, antiphon_class=parts.Antiphon):
