@@ -5,6 +5,7 @@ python:
 script:
   - pylint --rcfile=etc/pylintrc officium
   - pip install -U sphinx sphinx_rtd_theme && make -C doc html
+  - scripts/bringup/bringup-demo.sh
 deploy:
   provider: pages
   local-dir: doc/_build/html
