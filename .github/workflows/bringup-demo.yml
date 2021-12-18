@@ -1,0 +1,13 @@
+name: Bringup Demo
+on: [push]
+jobs:
+  Bringup-Demo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Run bringup-demo.sh
+        run: |
+          cd ${{ github.workspace }} && scripts/bringup/bringup-demo.sh
+      - run: echo "Job status is ${{ job.status }}."
+
