@@ -64,7 +64,7 @@ def main():
                 print("Office:", office._office)
                 print("Commemorations:", office._commemorations)
                 print("Concurring:", office._concurring)
-            render(offices, lang_data)
+            render(offices, lang_data if options.render else None)
         current_date += 1
 
 
