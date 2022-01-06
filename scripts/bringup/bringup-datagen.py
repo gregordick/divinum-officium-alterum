@@ -94,6 +94,9 @@ def make_descriptor(key, calcalc_lines, do_rubric_name):
         else:
             desc['ritus'] = 'simplex'
 
+        if 'Festum Domini' in rankline:
+            desc['persona'] = 'dominus'
+
         if key.endswith(calendar.BVM_SATURDAY_CALPOINT):
             desc['qualitas'] = 'officium sanctae mariae in sabbato'
         elif key.endswith('11-02'):
@@ -142,11 +145,18 @@ def make_descriptor(key, calcalc_lines, do_rubric_name):
     if 'Pasc0' in key:
         desc['officium'] = 'octavae-paschalis'
 
+    festum_bmv = re.search(r'mari(æ|ae)-(virg|in-sabbato)',
+                           desc.get('titulus', ''))
+    if 'persona' not in desc and festum_bmv:
+        desc['persona'] = 'beata-maria-virgo'
+
     doxology = None
     if desc.get('octavae_nomen') == 'nat':
         doxology = calendar.CalendarResolver.doxology_path('nativitatis')
     elif desc.get('octavae_nomen') == 'epi':
         doxology = calendar.CalendarResolver.doxology_path('epiphaniae')
+    elif festum_bmv:
+        doxology = calendar.CalendarResolver.doxology_path('nativitatis')
     else:
         doxology = calendar.CalendarResolver.calpoint_doxology(key)
     if doxology:
