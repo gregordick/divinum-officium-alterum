@@ -590,7 +590,7 @@ class CalendarResolver(ABC):
             concurring_commem = list(filter(keep, concurring))
         else:
             assert office is concurring[0]
-            concurring_commem = occurring[1:]
+            concurring_commem = concurring[1:]
             occurring_commem = list(filter(keep, occurring))
 
         # Sort the commemorations.
