@@ -467,6 +467,16 @@ class CalendarResolver(ABC):
         return not office.second_vespers_suppressed
 
     @classmethod
+    def has_second_vespers_in_commemoration(cls, office, date):
+        """Returns whether an office has second Vespers when that office was
+        not the office of the preceding.  (This is unrelated to whether second
+        Vespers of an office should be commemorated in first Vespers of the
+        following.)
+        """
+        assert cls.has_second_vespers(office, date)
+        return True
+
+    @classmethod
     def vespers_commem_filter(cls, commemorations, date, concurring):
         return commemorations
 
@@ -533,12 +543,46 @@ class CalendarResolver(ABC):
     def hour_classes(cls, office):
         return hours.hours_map[office.hours_key]
 
+    @classmethod
+    def concurrence_omit(cls, preceding, following, date):
+        winner, resn = cls.concurrence_resolution(preceding, following, date)
+        if resn != Resolution.OMIT:
+            return None
+        return preceding if winner is following else following
+
+    @classmethod
+    def filter_concurring_commem(cls, occurring, concurring, date,
+                                 second_vespers):
+        # Pop off the office of the day to get the unfiltered commemorations.
+        occurring_commem = occurring[1 if second_vespers else 0:]
+        concurring_commem = concurring[0 if second_vespers else 1:]
+        if not second_vespers:
+            date = date + 1
+
+        return (
+            [
+                preceding for preceding in occurring_commem
+                if all(cls.concurrence_omit(preceding, following,
+                                            date) is not preceding
+                       for following in concurring)
+            ],
+            [
+                following for following in concurring_commem
+                if all(cls.concurrence_omit(preceding, following,
+                                            date) is not following
+                       for preceding in occurring)
+            ],
+        )
+
     def offices(self, date):
         today, tomorrow = self.resolve_transfer(date, date + 1)
 
         # Find evening offices.
         occurring = [office for office in today
                      if self.has_second_vespers(office, date)]
+        occurring[1:] = [office for office in occurring[1:]
+                         if self.has_second_vespers_in_commemoration(office,
+                                                                     date)]
         concurring = [office for office in tomorrow
                       if self.has_first_vespers(office, date + 1)]
 
@@ -577,21 +621,11 @@ class CalendarResolver(ABC):
 
         second_vespers = office in occurring
 
-        # Should we keep an office that concurs with this one?
-        def keep(other):
-            args = (office, other) if second_vespers else (other, office)
-            args += (date,)
-            _, resolution = self.concurrence_resolution(*args)
-            return resolution != Resolution.OMIT
-
         # Find the commemorations.
-        if second_vespers:
-            occurring_commem = occurring[1:]
-            concurring_commem = list(filter(keep, concurring))
-        else:
-            assert office is concurring[0]
-            concurring_commem = concurring[1:]
-            occurring_commem = list(filter(keep, occurring))
+        (occurring_commem,
+         concurring_commem) = self.filter_concurring_commem(occurring,
+                                                            concurring, date,
+                                                            second_vespers)
 
         # Sort the commemorations.
         commemorations = self.resolve_commemorations(occurring_commem,

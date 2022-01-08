@@ -212,6 +212,15 @@ class CalendarResolverDA(CalendarResolver):
         ])
 
     @classmethod
+    def has_second_vespers_in_commemoration(cls, office, date):
+        # The office of a day within an octave loses its second Vespers (and
+        # thus allows first Vespers of the following day in the octave) if that
+        # office was not the office of the preceding, which last condition is
+        # implied by the fact that we're calling this function.
+        return (super().has_second_vespers_in_commemoration(office, date) and
+                not isinstance(office, WithinOctave))
+
+    @classmethod
     def concurrence_rank(cls, office):
         # Synthetic rank in concurrence.  Smaller is better.  Sundays and
         # privileged octave days are in the same category.
