@@ -595,7 +595,12 @@ def merge_do_section(propers, redirections, do_redirections, generic, options,
             assert out_key_base
             basename = m.group(2)
             if re.match(r'C\d+', basename):
-                redirections[out_key_base] = 'commune/' + basename
+                out_key_common = make_full_path(out_key_base, 'commune')
+                redirections[out_key_common] = 'commune/' + basename
+                # Use the -p variant for Easter.  These don't always exist, but
+                # those cases will get dropped cleanly in due course.
+                easter_common_out_key = make_full_path(out_key_common, 'pasc')
+                redirections[easter_common_out_key] = 'commune/%sp' % (basename,)
             else:
                 if '/' not in basename:
                     if re.match(r'\d\d-\d\d', basename):

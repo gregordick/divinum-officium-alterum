@@ -33,17 +33,18 @@ class Vespers:
         else:
             self._doxology = None
 
-    def lookup_order(self, office, items):
-        # XXX: The use of lambdas here is probably overengineered -- we could
-        # just mandate that the paths are prefixes and do a join rather than a
-        # call -- and the scoping doesn't behave in the way that we'd like.
+    def lookup_order(self, office, items, use_commons=True):
+        paths = []
 
-        paths = [
-            lambda item, key=key: '%s/%s' % (key, item)
-            for key in office.keys
-        ]
+        for keys in [office.keys] + ([['%s/commune' % (key,)
+                                       for key in office.keys]]
+                                     if use_commons else []):
+            if self._season:
+                paths += ['%s/%s' % (key, self._season) for key in keys]
+            paths += list(keys)
+
         season = [
-            lambda item, key=key: 'proprium/%s/%s' % (key, item)
+            'proprium/%s' % (key,)
             for key in self._season_keys
         ]
         # Seasonal keys take precedence over office keys for and only for
@@ -52,28 +53,30 @@ class Vespers:
             paths = season + paths
         else:
             paths += season
+
         # Fall back to propers from the preceding Sunday.  XXX: This is wrong,
         # in two respects: firstly, it should be any non-Sunday temporal
         # office, and not necessarily a feria; and secondly, slicing and dicing
         # the first key is in very poor taste.
         if isinstance(office, offices.Feria):
             sunday = office.keys[0][:-1] + '0'
-            paths.append(lambda item: 'proprium/%s/%s' % (sunday, item))
-        prefixes = []
+            paths.append('proprium/%s' % (sunday,))
+
+        psalter_prefixes = []
         if self._season:
-            prefixes.append(self._season + '/')
-        prefixes.append('')
-        for prefix in prefixes:
+            psalter_prefixes.append('/' + self._season)
+        psalter_prefixes.append('/')
+        for prefix in psalter_prefixes:
             paths += [
-                lambda item, prefix=prefix: 'psalterium/%s%s/%s' % (prefix,
-                                                                    util.day_ids[self._date.day_of_week],
-                                                                    item),
-                lambda item, prefix=prefix: 'psalterium/%s%s' % (prefix, item),
+                'psalterium%s/%s' % (prefix,
+                                     util.day_ids[self._date.day_of_week],),
+                'psalterium%s' % (prefix,),
             ]
+
         items = list(items)
         for path in paths:
             for item in items:
-                yield path(item)
+                yield '/'.join([path, item])
 
     def lookup(self, office, is_first, *items):
         base = [
