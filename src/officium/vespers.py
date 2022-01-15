@@ -65,7 +65,7 @@ class Vespers:
         psalter_prefixes = []
         if self._season:
             psalter_prefixes.append('/' + self._season)
-        psalter_prefixes.append('/')
+        psalter_prefixes.append('')
         for prefix in psalter_prefixes:
             paths += [
                 'psalterium%s/%s' % (prefix,
