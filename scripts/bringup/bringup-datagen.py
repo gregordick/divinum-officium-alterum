@@ -893,13 +893,6 @@ def propers(calendar_data, options, do_rubric_name):
             if ref in known_conclusions:
                 generic['conclusions'][key] = ref.replace(' ', '-')
 
-    if options.format == 'generic':
-        return [['create', generic]]
-
-    output = [['create', propers]]
-    if redirections:
-        output.append(['redirect', redirections])
-
     converted_redirections = {}
     warn_do_filenames = {}
     def make_officium_redir(do_basename, do_key):
@@ -931,10 +924,7 @@ def propers(calendar_data, options, do_rubric_name):
             if not merge():
                 del do_redirections[redir_key]
 
-    if converted_redirections:
-        output.append(['redirect', converted_redirections])
-
-    return output
+    return generic, propers, redirections, converted_redirections
 
 
 def parse_args():
@@ -955,23 +945,31 @@ def parse_args():
     parser.add_argument('--rubrics', '-r', choices=do_rubric_names.keys(),
                         default='rubricarum')
     parser.add_argument('--verbose', '-v', action='store_true')
-    parser.add_argument('datafile')
+    parser.add_argument('calcalc_calendar_datafile')
     return parser.parse_args()
 
 
 def main(options):
     do_rubric_name = do_rubric_names[options.rubrics]
-    out = parse(options.datafile, options, do_rubric_name)
+    calcalc = parse(options.calcalc_calendar_datafile, options, do_rubric_name)
 
     if options.format != 'raw':
-        out = make_calendar(out, do_rubric_name)
-        from_propers = propers(bringup.make_generic(options.rubrics, out),
-                               options, do_rubric_name)
+        cal_raw = make_calendar(calcalc, do_rubric_name)
+        calendar = bringup.make_generic(options.rubrics, cal_raw)
+        from_propers = propers(calendar, options, do_rubric_name)
+        generic, propers, redirections, converted_redirections = from_propers
+
         if options.format == 'propers':
-            out = from_propers
+            out = [['create', propers]]
+            if redirections:
+                out.append(['redirect', redirections])
+            if converted_redirections:
+                out.append(['redirect', converted_redirections])
         else:
             assert options.format == 'generic'
-            out += from_propers
+            out = cal_raw + [['create', generic]]
+    else:
+        out = calcalc
 
     print(yaml.dump(out, allow_unicode=True, Dumper=yaml.CDumper))
 
