@@ -481,6 +481,14 @@ class CalendarResolver(ABC):
         return commemorations
 
     @classmethod
+    def uses_common_for_psalmody(cls, office):
+        """Returns whether an office should use the common (if any) for its
+        psalmody and antiphons in the absence of proper parts.  Otherwise, it
+        should fall back to the psalter.
+        """
+        return office.rank <= 2 or office.use_common_override
+
+    @classmethod
     @abstractmethod
     def can_transfer(cls, transfer_office, offices):
         # Override this method.

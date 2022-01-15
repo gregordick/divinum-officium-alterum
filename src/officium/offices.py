@@ -89,17 +89,26 @@ class Office:
     def hours_key(self):
         return self.desc.get('officium', 'communis')
 
+    def _has_rubric(self, rubric):
+        return rubric in self.desc.get('rubricae', [])
+
     @property
     def second_vespers_suppressed(self):
         """Whether the office specifies explicitly that it should not have
         second Vespers, as a means of overriding a general rule.
         """
-        rubrics = self.desc.get('rubricae', [])
-        return 'officium terminatur post nonam' in rubrics
+        return self._has_rubric('officium terminatur post nonam')
 
     @property
     def doxology(self):
         return self.desc.get('doxologia')
+
+    @property
+    def use_common_override(self):
+        """Whether the office should take all the parts lacking from the proper
+        from the common, even when not entitled to do so by virtue of rank.
+        """
+        return self._has_rubric('omnia de communi')
 
 
 class Feast(Office):

@@ -587,11 +587,10 @@ def apply_inclusion(line, do_propers_base, do_basename, do_key, do_rubric_name,
 
 def merge_do_section(propers, redirections, do_redirections, generic, options,
                      do_propers_base, do_rubric_name, do_basename,
-                     out_key_base, do_key, value):
+                     out_key_base, do_key, value, extra_rubrics):
     if do_key == 'Rank':
         m = re.search(r'\b(ex|vide)\b\s+\b(.*)\b\s*$', value[0])
         if m:
-            # TODO: Distinguish between "ex" and "vide".
             assert out_key_base
             basename = m.group(2)
             if re.match(r'C\d+', basename):
@@ -601,6 +600,8 @@ def merge_do_section(propers, redirections, do_redirections, generic, options,
                 # those cases will get dropped cleanly in due course.
                 easter_common_out_key = make_full_path(out_key_common, 'pasc')
                 redirections[easter_common_out_key] = 'commune/%sp' % (basename,)
+                if m.group(1) == 'ex':
+                    extra_rubrics.setdefault(out_key_base, []).append('omnia de communi')
             else:
                 if '/' not in basename:
                     if re.match(r'\d\d-\d\d', basename):
@@ -744,7 +745,7 @@ def load_do_file(do_propers_base, do_rubric_name, options, do_basename):
 
 def merge_do_propers(propers, redirections, do_redirections, generic,
                      do_propers_base, do_basename, out_key_base, options,
-                     do_rubric_name):
+                     do_rubric_name, extra_rubrics):
     try:
         do_propers = load_do_file(do_propers_base, do_rubric_name, options,
                                   do_basename)
@@ -753,7 +754,7 @@ def merge_do_propers(propers, redirections, do_redirections, generic,
     for (do_key, value) in do_propers.items():
         merge_do_section(propers, redirections, do_redirections, generic,
                          options, do_propers_base, do_rubric_name, do_basename,
-                         out_key_base, do_key, value)
+                         out_key_base, do_key, value, extra_rubrics)
     return True
 
 
@@ -815,12 +816,17 @@ def post_process(propers, key):
         del propers[key]
 
 
+def make_proper_path(desc, calpoint):
+    return 'proprium/%s' % (desc.get('titulus', calpoint),)
+
+
 def propers(calendar_data, options, do_rubric_name):
     propers = {}
     generic = {}
     redirections = {}
     do_redirections = {}
     do_filename_to_officium = {}
+    extra_rubrics = {}
 
     do_propers_base = os.path.join(options.do_basedir, 'web', 'www', 'horas',
                                    options.language)
@@ -829,7 +835,7 @@ def propers(calendar_data, options, do_rubric_name):
         do_filename_to_officium[do_basename] = out_key_base
         return merge_do_propers(propers, redirections, do_redirections, generic,
                                 do_propers_base, do_basename, out_key_base,
-                                options, do_rubric_name)
+                                options, do_rubric_name, extra_rubrics)
 
     for (entry, descs) in calendar_data.dictionary.items():
         if not entry.startswith('calendarium/'):
@@ -841,7 +847,7 @@ def propers(calendar_data, options, do_rubric_name):
             do_calpoint,
         )
         # XXX: descs[0] is wrong.
-        out_key_base = 'proprium/%s' % (descs[0].get('titulus', calpoint),)
+        out_key_base = make_proper_path(descs[0], calpoint)
         merge()
 
     # August-November weeks.
@@ -924,7 +930,13 @@ def propers(calendar_data, options, do_rubric_name):
             if not merge():
                 del do_redirections[redir_key]
 
-    return generic, propers, redirections, converted_redirections
+    return (
+        generic,
+        propers,
+        redirections,
+        converted_redirections,
+        extra_rubrics,
+    )
 
 
 def parse_args():
@@ -956,17 +968,34 @@ def main(options):
     if options.format != 'raw':
         cal_raw = make_calendar(calcalc, do_rubric_name)
         calendar = bringup.make_generic(options.rubrics, cal_raw)
-        from_propers = propers(calendar, options, do_rubric_name)
-        generic, propers, redirections, converted_redirections = from_propers
+        (
+            generic,
+            propers_data,
+            redirections,
+            converted_redirections,
+            extra_rubrics,
+        ) = propers(calendar, options, do_rubric_name)
 
         if options.format == 'propers':
-            out = [['create', propers]]
+            out = [['create', propers_data]]
             if redirections:
                 out.append(['redirect', redirections])
             if converted_redirections:
                 out.append(['redirect', converted_redirections])
         else:
             assert options.format == 'generic'
+
+            # Add stuff to the office descriptors that was scraped from the
+            # per-language DO files.  We have no indexing into the descriptors,
+            # so we just iterate over the whole lot.
+            for record in cal_raw:
+                for calpoint, descs in record[1].items():
+                    for desc in descs:
+                        proper_path = make_proper_path(desc, calpoint)
+                        if proper_path in extra_rubrics:
+                            for rubric in extra_rubrics[proper_path]:
+                                add_rubric(desc, rubric)
+
             out = cal_raw + [['create', generic]]
     else:
         out = calcalc

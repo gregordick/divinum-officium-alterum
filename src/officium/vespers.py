@@ -78,21 +78,27 @@ class Vespers:
             for item in items:
                 yield '/'.join([path, item])
 
-    def lookup(self, office, is_first, *items):
+    def lookup(self, office, is_first, *items, **kwargs):
         base = [
             ['ad-i-vesperas' if is_first else 'ad-ii-vesperas'],
             ['ad-vesperas'],
             [],
         ]
-        return self._index.lookup(self.lookup_order(
-            office, ('/'.join(b + [item]) for item in items for b in base)))
+        return self._index.lookup(
+            self.lookup_order(
+                office,
+                ('/'.join(b + [item]) for item in items for b in base),
+                **kwargs
+            )
+        )
 
-    def lookup_main(self, *items):
-        return self.lookup(self._office, self._is_first, *items)
+    def lookup_main(self, *items, **kwargs):
+        return self.lookup(self._office, self._is_first, *items, **kwargs)
 
     def psalmody(self, antiphon_class=parts.Antiphon):
-        antiphons = self.lookup_main('antiphonae')
-        psalms = self.lookup_main('psalmi')
+        use_commons = self._calendar_resolver.uses_common_for_psalmody(self._office)
+        antiphons = self.lookup_main('antiphonae', use_commons=use_commons)
+        psalms = self.lookup_main('psalmi', use_commons=use_commons)
         yield parts.Psalmody(antiphons, self._generic_data[psalms],
                              self._primary_template_context, antiphon_class,
                              self.default_psalmish_class)
