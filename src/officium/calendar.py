@@ -288,11 +288,8 @@ class CalendarResolver(ABC):
     @classmethod
     def season(cls, calpoint_season, week, day):
         if calpoint_season == 'Quadp':
-            # XXX: Ash Wednesday and the following three days don't behave like
-            # Lenten days in all respects, so some care will be needed here.
-            # Maybe fix them up in the calendar?
             if week == 3 and day >= 3:
-                return 'quad'
+                return 'cineres'
             return 'septuagesimae'
         if calpoint_season == 'Quad' and week >= 5:
             return 'passionis'
@@ -338,7 +335,7 @@ class CalendarResolver(ABC):
             if doxology:
                 desc['doxologia'] = doxology
             desc['hebdomada'] = week
-            if desc['tempus'] in ['quad', 'passionis']:
+            if desc['tempus'] in ['cineres', 'quad', 'passionis']:
                 desc['status'] = 'major'
             if day == 0:
                 desc['qualitas'] = 'dominica'
@@ -382,6 +379,7 @@ class CalendarResolver(ABC):
     feria_classes = {
         'adv': offices.AdventFeria,
         'septuagesimae': offices.SeptuagesimatideFeria,
+        'cineres': offices.EarlyLentenFeria,
         'quad': offices.LentenFeria,
         'passionis': offices.PassiontideFeria,
     }
