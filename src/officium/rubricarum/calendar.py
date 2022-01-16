@@ -296,3 +296,10 @@ class CalendarResolver1962(CalendarResolver):
         # occurrence.
         winner, _ = cls.occurrence_resolution(transfer_office, offices[0])
         return winner == transfer_office
+
+    @classmethod
+    def has_ferial_preces_by_right(cls, office, date):
+        return (
+            super().has_ferial_preces_by_right(office, date) and
+            date.day_of_week in [3, 5]
+        )

@@ -110,6 +110,13 @@ class Office:
         """
         return self._has_rubric('omnia de communi')
 
+    @property
+    def ferial_preces_override(self):
+        """Whether the ferial preces should be said on account of this office,
+        even when this would not be so on general principles.
+        """
+        return self._has_rubric('preces feriales')
+
 
 class Feast(Office):
     @property

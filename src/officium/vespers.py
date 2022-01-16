@@ -5,9 +5,11 @@ from . import util
 
 class Vespers:
     default_psalmish_class = parts.PsalmishWithGloria
+    preces_key = 'ordinarium/ad-vesperas/preces-feriales'
 
     def __init__(self, date, generic_data, index, calendar_resolver, season,
-                 season_keys, doxology, office, concurring, commemorations):
+                 season_keys, doxology, office, morning_offices, concurring,
+                 commemorations):
         self._date = date
         self._generic_data = generic_data
         self._index = index
@@ -16,6 +18,13 @@ class Vespers:
         self._season_keys = season_keys
         self._office = office
         self._is_first = office in concurring
+
+        # These are the offices that were said this morning at Lauds, and not
+        # only those that have second Vespers.  We need these in order to
+        # detect the case where the ferial preces are to be said at Vespers
+        # on account of the morning's preces-inducing office, despite that
+        # office having ended.
+        self._morning_offices = morning_offices
 
         # Knowing the concurring offices allows us to determine whether a
         # commemoration is for first Vespers.
@@ -135,6 +144,19 @@ class Vespers:
         yield parts.PsalmishWithAntiphon(mag_ant, [mag],
                                          self._primary_template_context)
 
+    def have_ferial_preces(self):
+        # The preces should be said if they were said at Lauds and Vespers are
+        # not of the following.
+        return all([
+            self._calendar_resolver.has_ferial_preces(self._morning_offices[0],
+                                                      self._date),
+            not self._is_first,
+        ])
+
+    def kyrie(self):
+        yield parts.StructuredLookup('ordinarium/kyrie-simplex',
+                                     template_context=self._primary_template_context)
+
     def pater(self):
         yield parts.StructuredLookup('orationes/pater-noster-secreto',
                                      template_context=self._primary_template_context)
@@ -144,7 +166,7 @@ class Vespers:
 
     def preces(self):
         yield from self.pater()
-        yield parts.StructuredLookup('officium-defunctorum/preces',
+        yield parts.StructuredLookup(self.preces_key,
                                      parts.VersicleWithResponse,
                                      self._primary_template_context)
         # XXX: Elide when necessary.
@@ -225,6 +247,9 @@ class Vespers:
         yield from self.psalmody(antiphon_class)
         yield from self.chapter_hymn_and_verse(vr_class)
         yield from self.magnificat(antiphon_class)
+        if self.have_ferial_preces():
+            yield from self.kyrie()
+            yield from self.preces()
         yield from self.oration()
         yield from self.commemorations(antiphon_class, vr_class)
         yield from self.conclusion()
@@ -266,6 +291,7 @@ class EasterOctaveVespers(Vespers):
 
 class VespersOfTheDead(Vespers):
     default_psalmish_class = psalmish.PsalmishWithRequiem
+    preces_key = 'officium-defunctorum/preces'
 
     def resolve(self):
         yield from self.psalmody()

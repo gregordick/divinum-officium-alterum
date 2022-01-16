@@ -487,6 +487,22 @@ class CalendarResolver(ABC):
         return office.rank <= 2 or office.use_common_override
 
     @classmethod
+    def has_ferial_preces_by_right(cls, office, date):
+        return isinstance(office, (
+            offices.EarlyLentenFeria,
+            offices.LentenFeria,
+            offices.PassiontideFeria,
+            offices.AdventFeria,
+        ))
+
+    @classmethod
+    def has_ferial_preces(cls, office, date):
+        return any([
+            office.ferial_preces_override,
+            cls.has_ferial_preces_by_right(office, date),
+        ])
+
+    @classmethod
     @abstractmethod
     def can_transfer(cls, transfer_office, offices):
         # Override this method.
@@ -671,7 +687,8 @@ class CalendarResolver(ABC):
 
         return OrderedDict([
             ('vespers', [cls(date, self._data_map, self._index, self, season,
-                             season_keys, doxology, vespers_office, concurring,
+                             season_keys, doxology, vespers_office, today,
+                             concurring,
                              self.vespers_commem_filter(commemorations, date,
                                                         concurring))
                          for (cls, vespers_office) in zip(vespers_classes,

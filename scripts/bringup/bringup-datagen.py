@@ -23,9 +23,12 @@ def do_rubric_expression_matches(expression, do_rubric_name):
     return do_rubric_name.lower() in expression.lower()
 
 
+def dict_list_append(the_dict, key, value):
+    the_dict.setdefault(key, []).append(value)
+
+
 def add_rubric(desc, rubric):
-    rubrics = desc.setdefault('rubricae', [])
-    rubrics.append(rubric)
+    dict_list_append(desc, 'rubricae', rubric)
 
 
 def terminatur_post_nonam(desc):
@@ -206,7 +209,7 @@ do_rubric_names = {
     'divino': 'Divino',
 }
 
-def _parse(f, options, do_rubric_name):
+def _parse(f, options, do_rubric_name, section_regex):
     raw = {}
     # Completely spurious parser, but good enough.
     rubric_squashed = False
@@ -240,9 +243,9 @@ def _parse(f, options, do_rubric_name):
                     print('SQUASH:', line, file=sys.stderr)
             continue
 
-        m = re.match(r'\[(.*)\].*' + do_rubric_name, line)
+        m = re.match(section_regex + '.*' + do_rubric_name, line)
         if not m:
-            m = re.match(r'\[(.*)\]$', line)
+            m = re.match(section_regex + '$', line)
         if m:
             section = raw[m.group(1)] = []
             rubric_squashed = False
@@ -270,8 +273,12 @@ def _parse(f, options, do_rubric_name):
 
 
 def parse(filename, options, do_rubric_name):
+    if 'Ordinarium' in filename:
+        section_regex = '#(.*)'
+    else:
+        section_regex = r'\[(.*)\]'
     with open(filename, 'r') as f:
-        return _parse(f, options, do_rubric_name)
+        return _parse(f, options, do_rubric_name, section_regex)
 
 
 def make_calendar(raw, do_rubric_name):
@@ -432,6 +439,8 @@ def make_out_key(key, do_basename):
             'Pent': 'pentecostes',
         }.get(key, key)
         out_key = 'doxologiae/' + name
+    elif key == 'Preces Feriales' and do_basename.endswith('Vespera'):
+        out_key = 'ordinarium/ad-vesperas/preces-feriales'
     else:
         if not key in warn_keys:
             print("WARNING: Unrecognised key %s" % (key,), file=sys.stderr)
@@ -601,7 +610,8 @@ def merge_do_section(propers, redirections, do_redirections, generic, options,
                 easter_common_out_key = make_full_path(out_key_common, 'pasc')
                 redirections[easter_common_out_key] = 'commune/%sp' % (basename,)
                 if m.group(1) == 'ex':
-                    extra_rubrics.setdefault(out_key_base, []).append('omnia de communi')
+                    dict_list_append(extra_rubrics, out_key_base,
+                                     'omnia de communi')
             else:
                 if '/' not in basename:
                     if re.match(r'\d\d-\d\d', basename):
@@ -619,6 +629,8 @@ def merge_do_section(propers, redirections, do_redirections, generic, options,
                 m = re.match(r'(.*) et (.*)$', raw_names)
                 names = list(m.groups()) if m else raw_names
                 propers[out_path] = names
+            elif line.casefold() == 'preces feriales':
+                dict_list_append(extra_rubrics, out_key_base, 'preces feriales')
     else:
         out_path = make_full_path(out_key_base, make_out_key(do_key,
                                                              do_basename))
@@ -811,6 +823,10 @@ def post_process(propers, key):
     elif any(name.endswith('%s/oratio' % (day,)) for day in triduum_days):
         propers[name] = val[-3:]
         propers[re.sub(r'oratio$', 'christus-factus-est', name)] = val[:1]
+    elif name == 'ordinarium/ad-vesperas/preces-feriales':
+        # Trim Kyrie and Pater from beginning, and Domine exaudi from end.
+        propers[name] = val[2:-2]
+        propers['ordinarium/kyrie-simplex'] = val[0]
 
     if name != key:
         del propers[key]
@@ -864,9 +880,12 @@ def propers(calendar_data, options, do_rubric_name):
         out_key_base = 'commune/%s' % (common,)
         merge()
 
+    out_key_base = None
     for basename in ["Psalmi major", "Major Special", "Prayers", "Doxologies"]:
         do_basename = os.path.join('Psalterium', basename)
-        out_key_base = None
+        merge()
+    for basename in ["Vespera"]:
+        do_basename = os.path.join('Ordinarium', basename)
         merge()
 
     for psalm_range in do_to_officium_psalm:
