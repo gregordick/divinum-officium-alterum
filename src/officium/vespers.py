@@ -136,7 +136,7 @@ class Vespers:
         yield from self.versicle_and_response(vr_class)
 
     def magnificat(self, antiphon_class=parts.Antiphon):
-        path = self.lookup_main('ad-magnificat')
+        path = self.lookup_main('ad-canticum')
         mag_ant = parts.StructuredLookup(path, antiphon_class,
                                          self._primary_template_context)
         # XXX: Slashes.
@@ -195,7 +195,7 @@ class Vespers:
             template_context = self.make_template_context(commem)
             part_list = [
                 parts.StructuredLookup(self.lookup(commem, is_first,
-                                                   'ad-magnificat'),
+                                                   'ad-canticum'),
                                        antiphon_class, template_context),
                 parts.StructuredLookup(versicle_pair, vr_class,
                                        template_context),
@@ -254,22 +254,29 @@ class Vespers:
         yield from self.commemorations(antiphon_class, vr_class)
         yield from self.conclusion()
 
-    @staticmethod
-    def make_template_context(office):
-        # XXX: Using keys[0] is wrong; factor out multi-key lookup so that
-        # TemplateContext can use it too.
+    def make_template_context(self, office):
+        cases = [
+            'nominativo',
+            'vocativo',
+            'accusativo',
+            'genitivo',
+            'dativo',
+            'ablativo',
+        ]
+
+        prefix_map = {
+            # XXX: Using keys[0] is wrong; factor out multi-key lookup so that
+            # TemplateContext can use it too.
+            'nomen_': office.keys[0] + '/nomen/',
+            'nomen_titularis_': self._calendar_resolver.titular_path,
+        }
+
         return parts.TemplateContext(
             direct_symbols={},
             indirect_symbols={
-                'nomen_' + case: '/nomen/'.join([office.keys[0], case])
-                for case in [
-                    'nominativo',
-                    'vocativo',
-                    'accusativo',
-                    'genitivo',
-                    'dativo',
-                    'ablativo',
-                ]
+                prefix + case: path + case if path is not None else None
+                for case in cases
+                for (prefix, path) in prefix_map.items()
             },
         )
 

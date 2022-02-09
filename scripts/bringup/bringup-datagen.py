@@ -258,8 +258,7 @@ def _parse(f, options, do_rubric_name, section_regex):
 
         assert not accumulator, "Section ends with continuation"
 
-        if line.startswith(('V. ', 'R. ', 'v. ', 'r. ')):
-            line = line[3:]
+        line = re.sub(r'\b([VRvr]|Ant)[.] ', '', line)
 
         if not rubric_squashed and section is not None:
             section.append(line)
@@ -324,6 +323,12 @@ def make_calendar(raw, do_rubric_name):
 
     return output
 
+suffrage_map = {
+    '1': 'de-beata-maria-atque-omnibus-sanctis',
+    '2': 'de-cruce/ad-laudes',
+    '2v': 'de-cruce/ad-vesperas',
+    '11': 'de-omnibus-sanctis',
+}
 
 warn_keys = {}
 def make_out_key(key, do_basename):
@@ -344,13 +349,15 @@ def make_out_key(key, do_basename):
         ('Commune/C9', 'Oratio 21'),
         ('Commune/C9', 'Conclusio'),
         ('Commune/C9', 'Oratio_Fid'),
+    ] + [
+        'Suffragium%s' % (k,) for k in suffrage_map
     ]
     if key is None:
         return None
     elif key == 'Ant 1':
-        out_key = 'ad-i-vesperas/ad-magnificat'
+        out_key = 'ad-i-vesperas/ad-canticum'
     elif key == 'Ant 3':
-        out_key = 'ad-ii-vesperas/ad-magnificat'
+        out_key = 'ad-ii-vesperas/ad-canticum'
     elif key.startswith('Ant Vespera'):
         if key == 'Ant Vespera 1':
             out_key = 'ad-i-vesperas'
@@ -534,6 +541,8 @@ def name_case(do_basename, do_key):
         return 'nominativo'
     if do_basename.endswith('C2') and do_key == 'Oratio3':
         return 'ablativo'
+    if do_basename.endswith('Major Special') and do_key.startswith('Suffragium'):
+        return 'ablativo'
     if do_basename.endswith('C4') and re.match(r'Oratio[29]', do_key):
         # This includes Oratio91.
         return 'accusativo'
@@ -574,24 +583,23 @@ def apply_inclusion(line, do_propers_base, do_basename, do_key, do_rubric_name,
     except (AttributeError, FileNotFoundError, KeyError):
         yield line
         return
+
+    m = re.match(r'(\d+)(?:-(\d+))?$', subs or '')
+    if m:
+        # Line-range.
+        start, stop = m.groups()
+        stop = stop or start
+        included = included[int(start) - 1:int(stop)]
+        subs = None
+
     for included_line in included:
         if re.match(inclusion_regex, included_line):
             sublines = apply_inclusion(included_line, do_propers_base,
                                        basename, key, do_rubric_name, options)
         else:
             sublines = [included_line]
-        m = re.match(r'(\d+)(?:-(\d+))?$', subs or '')
-        if m:
-            # Line-range.
-            start, stop = m.groups()
-            stop = stop or start
-            for subline in itertools.islice(sublines, int(start),
-                                            int(stop) + 1):
-                yield subline
-        else:
-            # Substitutions.
-            for subline in sublines:
-                yield apply_subs_to_str(subs, subline)
+        for subline in sublines:
+            yield apply_subs_to_str(subs, subline)
 
 
 def merge_do_section(propers, redirections, do_redirections, generic, options,
@@ -684,7 +692,11 @@ def merge_do_section(propers, redirections, do_redirections, generic, options,
             else:
                 do_redirections[out_path] = (redir_basename, redir_key)
         else:
-            template_var = 'officium.nomen_' + name_case(do_basename, do_key)
+            template_var = 'officium.nomen_'
+            if do_key.startswith('Suffragium'):
+                template_var += 'titularis_'
+            template_var += name_case(do_basename, do_key)
+
             # XXX: Latin-specific.
             value = [
                 re.sub(r'\bN[.] et N[.]\B',
@@ -827,6 +839,16 @@ def post_process(propers, key):
         # Trim Kyrie and Pater from beginning, and Domine exaudi from end.
         propers[name] = val[2:-2]
         propers['ordinarium/kyrie-simplex'] = val[0]
+    elif name in ['suffragium%s' % (k,) for k in suffrage_map]:
+        base = 'suffragia/' + suffrage_map[name[len('suffragium'):]]
+        for part in ['ad-canticum', 'versiculum']:
+            entry = propers['%s/%s' % (base, part)] = []
+            while val:
+                item = val.pop(0)
+                if item.strip() == '_':
+                    break
+                entry.append(item)
+        entry = propers['%s/oratio' % (base,)] = val[-2:]
 
     if name != key:
         del propers[key]

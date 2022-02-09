@@ -68,7 +68,7 @@ def make_latin(raw_latin):
 
 # XXX: Latin is special here, but only because we're building the index, which
 # in principle should be external.
-def bringup_components(generic_file, latin_data_file, rubrics):
+def bringup_components(generic_file, latin_data_file, rubrics, titular_path):
     with open(generic_file) as f:
         raw_generic = yaml.load(f, Loader=yaml.CSafeLoader)
     with open(latin_data_file) as f:
@@ -82,6 +82,6 @@ def bringup_components(generic_file, latin_data_file, rubrics):
     # XXX: Redirections shouldn't be in latin_data.
     index.redirections = dict(data.redirections, **latin_data.redirections)
 
-    resolver = resolvers[rubrics](data, index)
+    resolver = resolvers[rubrics](data, index, titular_path)
 
     return resolver, latin_data

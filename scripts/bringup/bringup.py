@@ -39,6 +39,7 @@ def parse_args():
                         default='rubricarum')
     parser.add_argument('--render', action='store_true')
     parser.add_argument('--verbose', '-v', action='store_true')
+    parser.add_argument('--titular-path', '-t')
     parser.add_argument('generic_file')
     parser.add_argument('lang_data_file')
     parser.add_argument('date')
@@ -50,7 +51,8 @@ def main():
 
     resolver, lang_data = bringup_components(options.generic_file,
                                              options.lang_data_file,
-                                             options.rubrics)
+                                             options.rubrics,
+                                             options.titular_path)
 
     date = make_date(options.date)
     current_date = date #- 366

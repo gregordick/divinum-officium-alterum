@@ -303,3 +303,7 @@ class CalendarResolver1962(CalendarResolver):
             super().has_ferial_preces_by_right(office, date) and
             date.day_of_week in [3, 5]
         )
+
+    @staticmethod
+    def want_suffrages(*args, **kwargs):
+        return False

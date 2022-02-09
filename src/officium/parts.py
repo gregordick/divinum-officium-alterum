@@ -94,6 +94,9 @@ class TemplateContextLookup:
     def __getattr__(self, attr):
         # XXX: Fail nicely here if attr is not in symbols.
         key = self.symbols[attr]
+        # XXX: !
+        if key is None:
+            return '??'
         # XXX: Should some of this use the index??
         return self.lang_data.get(self.lang_data.lookup([key]), '?')
 

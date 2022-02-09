@@ -123,6 +123,10 @@ class Feast(Office):
     def of_the_lord(self):
         return False
 
+    @property
+    def of_the_blessed_virgin_mary(self):
+        return False
+
 
 # XXX: Having TemporalOffice in the class hierarchy is wrong, because some
 # types of office (feasts, vigils, ...) can be temporal or sanctoral.
@@ -197,3 +201,12 @@ class OctaveDay(Office): pass
 
 class OfTheDead(Office):
     hours_key = 'defunctorum'
+
+class Suffrage(Office):
+    def __init__(self, key):
+        super().__init__({'ritus': 'simplex', 'classis': 4, 'titulus': key})
+        self.key = 'suffragia/%s' % (key,)
+
+    @property
+    def keys(self):
+        return [self.key]

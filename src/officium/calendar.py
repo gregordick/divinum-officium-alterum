@@ -49,9 +49,10 @@ class CalendarResolver(ABC):
     # for most versions, but can be overridden in others.
     NAT2_SUNDAY_LIMIT = 4
 
-    def __init__(self, data_map, index):
+    def __init__(self, data_map, index, titular_path=None):
         self._data_map = data_map
         self._index = index
+        self._titular_path = titular_path
 
         # XXX: Temporary crude cache to make regression tests faster.
         self._resolve_transfer_cache = None
@@ -596,6 +597,40 @@ class CalendarResolver(ABC):
             ],
         )
 
+    @staticmethod
+    def want_suffrages(temporal_calpoint, office, commemorations):
+        if temporal_calpoint is None:
+            # From Christmas inclusive to the first Sunday after the Epiphany
+            # exclusive.
+            return False
+        all_offices = [office] + commemorations
+        return not any([
+            o.rite >= offices.Rite.DOUBLE or
+            isinstance(o, (
+                offices.WithinOctave,
+                offices.OctaveDay,
+                offices.AdventSunday,
+                offices.AdventFeria,
+                offices.PassiontideSunday,
+                offices.PassiontideFeria,
+            ))
+            for o in all_offices
+        ])
+
+    @staticmethod
+    def suffrages(season, office, commemorations):
+        all_offices = [office] + commemorations
+        if season == 'pasc':
+            key = 'de-cruce'
+        elif any([
+            isinstance(o, offices.Feast) and o.of_the_blessed_virgin_mary
+            for o in all_offices
+        ]):
+            key = 'de-omnibus-sanctis'
+        else:
+            key = 'de-beata-maria-atque-omnibus-sanctis'
+        return [offices.Suffrage(key)]
+
     def offices(self, date):
         today, tomorrow = self.resolve_transfer(date, date + 1)
 
@@ -654,9 +689,9 @@ class CalendarResolver(ABC):
                                                      concurring_commem)
 
         season = None
-        calpoint = self.temporal_calpoint(date)
-        if calpoint:
-            season, _, _ = self.split_calpoint(calpoint)
+        temporal_calpoint = self.temporal_calpoint(date)
+        if temporal_calpoint:
+            season, _, _ = self.split_calpoint(temporal_calpoint)
             season = season.lower()
 
         # Get seasonal keys, which in practice means the months from August to
@@ -678,6 +713,9 @@ class CalendarResolver(ABC):
                 commemorations = [c for c in commemorations
                                   if c is not concurring[0]]
 
+        if self.want_suffrages(temporal_calpoint, office, commemorations):
+            commemorations += self.suffrages(season, office, commemorations)
+
         hour_classes = self.hour_classes(office)
         vespers_classeses = [self.hour_classes(x) for x in vespers_offices]
         vespers_classes = [
@@ -694,3 +732,7 @@ class CalendarResolver(ABC):
                          for (cls, vespers_office) in zip(vespers_classes,
                                                           vespers_offices)]),
         ])
+
+    @property
+    def titular_path(self):
+        return self._titular_path
