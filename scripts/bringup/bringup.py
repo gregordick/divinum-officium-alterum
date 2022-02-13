@@ -43,6 +43,7 @@ def parse_args():
     parser.add_argument('generic_file')
     parser.add_argument('lang_data_file')
     parser.add_argument('date')
+    parser.add_argument('end_date', nargs='?')
     return parser.parse_args()
 
 
@@ -54,14 +55,15 @@ def main():
                                              options.rubrics,
                                              options.titular_path)
 
-    date = make_date(options.date)
-    current_date = date #- 366
-    resolver._resolve_transfer_cache = resolver.resolve_transfer(current_date, date + 1)
+    current_date = make_date(options.date)
+    end_date = make_date(options.end_date or options.date)
+    resolver._resolve_transfer_cache = resolver.resolve_transfer(current_date, end_date + 1)
     resolver._resolve_transfer_cache_base = current_date
 
-    while current_date <= date:
+    while current_date <= end_date:
         offices = resolver.offices(current_date)['vespers']
-        if options.verbose or current_date == date:
+        if options.verbose or current_date == end_date:
+            print("Date:", current_date)
             for office in offices:
                 print("Office:", office._office)
                 print("Commemorations:", office._commemorations)
