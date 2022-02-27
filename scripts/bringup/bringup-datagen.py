@@ -602,6 +602,73 @@ def apply_inclusion(line, do_propers_base, do_basename, do_key, do_rubric_name,
             yield apply_subs_to_str(subs, subline)
 
 
+def merge_do_section_to_path(propers, generic, do_basename, do_key, value,
+                             out_path):
+    template_var = 'officium.nomen_'
+    if do_key.startswith('Suffragium'):
+        template_var += 'titularis_'
+    template_var += name_case(do_basename, do_key)
+
+    # XXX: Latin-specific.
+    value = [
+        re.sub(r'\bN[.] et N[.]\B',
+               '{{%s[0]}} et {{%s[1]}}' % (template_var, template_var),
+               x)
+        for x in value
+    ]
+    value = [re.sub(r'\bN[.]\B', '{{%s}}' % (template_var,), x)
+             for x in value]
+    # XXX: Doing this unconditionally is a bit rash.
+    value = [re.sub(r'^[VR]\. ', '', line) for line in value]
+
+    if out_path.endswith('/antiphonae'):
+        # Separate out the psalms.
+        try:
+            value, psalms = zip(*(entry.split(';;')
+                                  for entry in value))
+            generic[out_path[:-len('/antiphonae')] + '/psalmi'] = [
+                ['psalmi/%s' % (p,) for p in psalm_spec.split(';')]
+                for psalm_spec in psalms
+            ]
+            value = list(value)
+        except ValueError:
+            # Some or all entries were missing psalms.
+            pass
+    elif out_path.endswith('/hymnus'):
+        verse = []
+        verses = [verse]
+        variable_doxology = False
+        for line in value:
+            if line.strip() == '_':
+                verse = []
+                verses.append(verse)
+            else:
+                line = re.sub(r'^([{].*[}])?(v[.]\s*)?', '', line)
+                if line.startswith('*'):
+                    line = re.sub(r'^[*]\s*', '', line)
+                    variable_doxology = True
+                verse.append(line)
+        if variable_doxology:
+            value = {
+                'type': 'hymnus-cum-doxologia-mutabile',
+                'content': verses,
+            }
+        else:
+            value = verses
+    elif out_path.endswith('/haec-dies'):
+        value = [re.sub(r'^Ant\. |[*]\s*', '', x) for x in value]
+    elif 'capitulum' in out_path:
+        if value and value[0].startswith('!'):
+            value = {
+                'scripture_ref': re.sub(r'^!\s*', '', value[0]),
+                'content': value[1:]
+            }
+    elif '/nomen/' in out_path and len(value) == 1:
+        value = value[0]
+    propers[out_path] = value
+
+
+
 def merge_do_section(propers, redirections, do_redirections, generic, options,
                      do_propers_base, do_rubric_name, do_basename,
                      out_key_base, do_key, value, extra_rubrics):
@@ -692,69 +759,8 @@ def merge_do_section(propers, redirections, do_redirections, generic, options,
             else:
                 do_redirections[out_path] = (redir_basename, redir_key)
         else:
-            template_var = 'officium.nomen_'
-            if do_key.startswith('Suffragium'):
-                template_var += 'titularis_'
-            template_var += name_case(do_basename, do_key)
-
-            # XXX: Latin-specific.
-            value = [
-                re.sub(r'\bN[.] et N[.]\B',
-                       '{{%s[0]}} et {{%s[1]}}' % (template_var, template_var),
-                       x)
-                for x in value
-            ]
-            value = [re.sub(r'\bN[.]\B', '{{%s}}' % (template_var,), x)
-                     for x in value]
-            # XXX: Doing this unconditionally is a bit rash.
-            value = [re.sub(r'^[VR]\. ', '', line) for line in value]
-
-            if out_path.endswith('/antiphonae'):
-                # Separate out the psalms.
-                try:
-                    value, psalms = zip(*(entry.split(';;')
-                                          for entry in value))
-                    generic[out_path[:-len('/antiphonae')] + '/psalmi'] = [
-                        ['psalmi/%s' % (p,) for p in psalm_spec.split(';')]
-                        for psalm_spec in psalms
-                    ]
-                    value = list(value)
-                except ValueError:
-                    # Some or all entries were missing psalms.
-                    pass
-            elif out_path.endswith('/hymnus'):
-                verse = []
-                verses = [verse]
-                variable_doxology = False
-                for line in value:
-                    if line.strip() == '_':
-                        verse = []
-                        verses.append(verse)
-                    else:
-                        line = re.sub(r'^([{].*[}])?(v[.]\s*)?', '', line)
-                        if line.startswith('*'):
-                            line = re.sub(r'^[*]\s*', '', line)
-                            variable_doxology = True
-                        verse.append(line)
-                if variable_doxology:
-                    value = {
-                        'type': 'hymnus-cum-doxologia-mutabile',
-                        'content': verses,
-                    }
-                else:
-                    value = verses
-            elif out_path.endswith('/haec-dies'):
-                value = [re.sub(r'^Ant\. |[*]\s*', '', x) for x in value]
-            elif 'capitulum' in out_path:
-                if value and value[0].startswith('!'):
-                    value = {
-                        'scripture_ref': re.sub(r'^!\s*', '', value[0]),
-                        'content': value[1:]
-                    }
-            elif '/nomen/' in out_path and len(value) == 1:
-                value = value[0]
-            propers[out_path] = value
-
+            merge_do_section_to_path(propers, generic, do_basename, do_key,
+                                     value, out_path)
 
 def load_do_file(do_propers_base, do_rubric_name, options, do_basename):
     assert do_basename
