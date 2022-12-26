@@ -16,6 +16,7 @@ import yaml
 
 from officium import bringup
 from officium import calendar
+from officium import offices
 from officium import util
 
 
@@ -227,11 +228,12 @@ def _parse(f, options, do_rubric_name, section_regex):
         if re.match(r'[(].*[)]$', line):
             cond_matches = do_rubric_expression_matches(line, do_rubric_name)
             if 'omittitur' in line:
-                if section and cond_matches:
-                    section.pop()
+                if cond_matches:
+                    while section and section.pop() != '':
+                        pass
             elif 'omittuntur' in line:
                 # XXX: Should only clobber as far back as the beginning of the
-                # block.
+                # nested scope.
                 if cond_matches:
                     section = []
             else:
@@ -287,11 +289,12 @@ def make_calendar(raw, do_rubric_name):
         for (k, v) in expand_calendar_at_refs(raw).items()
     }
 
-    assert d['calendarium/07-24'].pop(0)['titulus'] == 'in-vigilia-s-jacobi-apostoli'
-    # An error in the parser for conditionals means that we skip this one anyway:
-    #assert d['calendarium/09-20'].pop(1)['titulus'] == 'in-vigilia-s-matthaei-apostoli'
-    assert d['calendarium/11-08'].pop(0)['titulus'] == 'in-octava-omnium-sanctorum'
-    assert d['calendarium/11-29'].pop(0)['titulus'] == 'in-vigilia-s-andreae-apostoli'
+    if do_rubric_name == 'Divino':
+        assert d['calendarium/07-24'].pop(0)['titulus'] == 'in-vigilia-s-jacobi-apostoli'
+        # An error in the parser for conditionals means that we skip this one anyway:
+        #assert d['calendarium/09-20'].pop(1)['titulus'] == 'in-vigilia-s-matthaei-apostoli'
+        assert d['calendarium/11-08'].pop(0)['titulus'] == 'in-octava-omnium-sanctorum'
+        assert d['calendarium/11-29'].pop(0)['titulus'] == 'in-vigilia-s-andreae-apostoli'
 
     # Split the entries into those that should replace default entries and
     # those that should be appended.
@@ -446,7 +449,9 @@ def make_out_key(key, do_basename):
             'Pent': 'pentecostes',
         }.get(key, key)
         out_key = 'doxologiae/' + name
-    elif key == 'Preces Feriales' and do_basename.endswith('Vespera'):
+    elif key.startswith == 'Preces feriales Laudes':
+        out_key = 'ordinarium/ad-laudes/preces-feriales'
+    elif key.startswith == 'Preces feriales Vesperas':
         out_key = 'ordinarium/ad-vesperas/preces-feriales'
     else:
         if not key in warn_keys:
@@ -671,7 +676,8 @@ def merge_do_section_to_path(propers, generic, do_basename, do_key, value,
 
 def merge_do_section(propers, redirections, do_redirections, generic, options,
                      do_propers_base, do_rubric_name, do_basename,
-                     out_key_base, do_key, value, extra_rubrics):
+                     out_key_base, do_key, value, extra_rubrics, calpoint,
+                     calendar_descs):
     if do_key == 'Rank':
         m = re.search(r'\b(ex|vide)\b\s+\b(.*)\b\s*$', value[0])
         if m:
@@ -706,6 +712,124 @@ def merge_do_section(propers, redirections, do_redirections, generic, options,
                 propers[out_path] = names
             elif line.casefold() == 'preces feriales':
                 dict_list_append(extra_rubrics, out_key_base, 'preces feriales')
+    elif do_key.startswith('Commemoratio'):
+        if do_key == 'Commemoratio4':
+            # St Peter or St Paul.
+            print("WARNING: TODO: Commemoratio4", do_basename, file=sys.stderr)
+            return
+        elif do_key == 'Commemoratio 5':
+            # This is used exactly once, to handle commemoration of the octave
+            # day of All Saints in first Vespers of the Dedication of the
+            # Lateran Basilica.  officium gets this right without having to
+            # special-case it like this, so just ignore it.
+            assert do_basename == 'Sancti/11-09'
+            return
+        elif not calendar_descs or not calendar_descs[1:]:
+            # Must have been referenced from an inclusion.
+            print(f"WARNING: Don't know where to put commemorations for {do_basename}",
+                  file=sys.stderr)
+            return
+
+        suffixes = {
+            1: '/ad-i-vesperas',
+            2: '/ad-laudes',
+            3: '/ad-ii-vesperas',
+        }
+        commem_offices = [
+            desc for desc in calendar_descs[1:]
+            if not issubclass(calendar.CalendarResolver.descriptor_class(desc),
+                              offices.Vigil)
+        ]
+        commems = list(parse_commemorations(value))
+        m = re.search(r'(\d)$', do_key)
+        digit = m and int(m.group(1))
+        if len(commem_offices) > len(commems) and digit == 1:
+            # Hmm.  More offices than commemorations at first Vespers, so one
+            # of the offices doesn't get first Vespers.  DO's commemoration
+            # semantics are such that this only happens when one of the
+            # commemorated offices is a day within an octave and the office of
+            # the preceding day is of the octave.  Filter it out.
+            commem_offices = [
+                desc for desc in commem_offices
+                if not issubclass(calendar.CalendarResolver.descriptor_class(desc),
+                                  offices.WithinOctave)
+            ]
+        if len(commem_offices) < len(commems):
+            # E.g. 10-07r, where a whole-file inclusion pulls in a Divino
+            # commemoration that gets squashed by 1960 commem-limit logic.
+            print(f"WARNING: Too many commemorations for {do_basename}:{do_key}",
+                  file=sys.stderr)
+        if len(commem_offices) > len(commems) and do_basename != 'Sancti/07-01':
+            # Too few commemorations.  The 07-01 exception is for the day
+            # within the octave of Ss. Peter and Paul, which is not
+            # commemorated on that day.
+            assert False, (commem_offices, commems)
+        for calentry, com in zip(commem_offices, commems):
+            base_path = make_proper_path(calentry, calpoint)
+
+            have_redirect = False
+            digit_recurse = False
+            while 'do-ref-basename' in com:
+                # TODO: Actually handle Gregem.
+                if (com['do-ref-key'] is None or
+                    re.match(r'Oratio\d?(\s+(proper|Gregem|proper Gregem))?',
+                             com['do-ref-key'])):
+                    have_redirect = True
+                    break
+                else:
+                    expanded = apply_inclusion(com['do-ref-raw'],
+                                               do_propers_base, do_basename,
+                                               do_key, do_rubric_name, options)
+                    expanded = list(expanded)
+                    if expanded[0].startswith('@'):
+                        # The inclusion failed, but maybe it was an implicit-
+                        # digit case (like Octava meaning Octava [123]).
+                        for add_digit in [digit] if digit else suffixes:
+                            digitised_key = (do_key if digit else
+                                             f'{do_key} {add_digit}')
+                            digitised_value = [f'{expanded} {add_digit}']
+                            if 'oratio' in com:
+                                digitised_value += ['$Oremus', com['oratio']]
+                            merge_do_section(propers, redirections,
+                                             do_redirections, generic, options,
+                                             do_propers_base, do_rubric_name,
+                                             do_basename, out_key_base,
+                                             digitised_key, digitised_value,
+                                             extra_rubrics, calpoint,
+                                             calendar_descs)
+                        digit_recurse = True
+                        break
+                    (com,) = parse_commemorations(expanded)
+            else:
+                # We assume that redirections only occur in the first lines of
+                # commemorations.
+                assert all('@' not in v for v in com.values())
+
+            if digit_recurse:
+                # We handled this commemoration in the recursions.
+                continue
+
+            if have_redirect:
+                if digit is not None:
+                    com_redirs = {
+                        base_path + suffixes[digit]:
+                        (com['do-ref-basename'],
+                         f"{com['do-ref-key']} {digit}")
+                    }
+                else:
+                    com_redirs = {
+                        base_path: (com['do-ref-basename'], com['do-ref-key'])
+                    }
+                do_redirections.update(com_redirs)
+            prefix = base_path + (suffixes[digit] if digit is not None else '')
+            for proper_path, proper_text in commemoration_propers(com):
+                propers[prefix + '/' + proper_path] = proper_text
+    elif do_key == 'Oratio Vigilia':
+        # TODO: Do this.
+        print("WARNING: TODO: Oratio Vigilia", do_basename, file=sys.stderr)
+        return
+        calentry, = vigils
+        propers[path(calentry) + '/oratio'] = proper_text
     else:
         out_path = make_full_path(out_key_base, make_out_key(do_key,
                                                              do_basename))
@@ -775,7 +899,7 @@ def load_do_file(do_propers_base, do_rubric_name, options, do_basename):
 
 def merge_do_propers(propers, redirections, do_redirections, generic,
                      do_propers_base, do_basename, out_key_base, options,
-                     do_rubric_name, extra_rubrics):
+                     do_rubric_name, extra_rubrics, calpoint, calendar_descs):
     try:
         do_propers = load_do_file(do_propers_base, do_rubric_name, options,
                                   do_basename)
@@ -784,8 +908,89 @@ def merge_do_propers(propers, redirections, do_redirections, generic,
     for (do_key, value) in do_propers.items():
         merge_do_section(propers, redirections, do_redirections, generic,
                          options, do_propers_base, do_rubric_name, do_basename,
-                         out_key_base, do_key, value, extra_rubrics)
+                         out_key_base, do_key, value, extra_rubrics, calpoint,
+                         calendar_descs)
     return True
+
+
+def parse_commemorations(lines):
+    lines_iter = iter(lines)
+    for first_line in lines_iter:
+        commem = {}
+        try:
+            while first_line.startswith('!'):
+                first_line = next(lines_iter)
+            # If the _first_ line is an @-ref, then it's a special inclusion
+            # for commemorations.  @-refs elsewhere are left for expansion by
+            # the usual mechanism.
+            m = re.match(inclusion_regex, first_line)
+            if m:
+                # Parse the inclusion.
+                basename, key, subs = m.groups()
+                commem['do-ref-basename'] = basename
+                commem['do-ref-key'] = key
+                commem['do-ref-subs'] = subs
+                commem['do-ref-raw'] = first_line
+                # Maybe fall through to parsing a prayer, but if the next line
+                # is _, the prayers comes from the inclusion and this
+                # commemoration is complete.
+                next_line = next(lines_iter)
+                if next_line == '_':
+                    # End of this commemoration.  The "finally" block will
+                    # yield it, and then we'll move on to the next one.
+                    continue
+            else:
+                # Parse antiphon and versicle.
+                commem['antiphona'] = [first_line]
+                assert next(lines_iter) == '_'
+                versicle = next(lines_iter)
+                response = next(lines_iter)
+                commem['versiculum'] = [versicle, response]
+                assert next(lines_iter) == '_'
+                next_line = next(lines_iter)
+
+            # XXX: Hideous hack: There's an occurrence of
+            #   @Something
+            #   (sed tempore paschali) @Something_else
+            # but we don't handle inline conditionals.  Just detect it and
+            # skip it.
+            if next_line.startswith('('):
+                print(f"WARNING: Ignoring conditional in {next_line}",
+                      file=sys.stderr)
+                next_line = next(lines_iter)
+
+            # Parse the prayer.
+            assert next_line.startswith('$Oremus')
+            prayer = next(lines_iter)
+            conclusion = next(lines_iter)
+            if conclusion == '_':
+                # This is the case where we're in a non-final commemoration,
+                # and DO simply omitted the conclusion of the collect in the
+                # datafile.  Ho hum.  Let's just guess that it's Per Dominum.
+                conclusion = '$Per Dominum'
+            else:
+                # If we have a next line, it must be '_' as a separator between
+                # multiple commemorations.  If we don't have a next line, we'll
+                # fall into the "except" block.
+                assert next(lines_iter) == '_'
+
+            commem['oratio'] = [prayer, conclusion]
+        except StopIteration:
+            # This branch catches the case where we run out of lines in the
+            # middle of parsing a commemoration.  This is not necessarily
+            # unexpected: in particular, this is how we handle @-ref
+            # commemorations without overridden prayers and with no following
+            # commemorations.
+            pass
+        finally:
+            assert commem
+            yield commem
+
+
+def commemoration_propers(commem):
+    for part in ['antiphona', 'versiculum', 'oratio']:
+        if part in commem:
+            yield (part, commem[part])
 
 
 triduum_days = [
@@ -879,9 +1084,10 @@ def propers(calendar_data, options, do_rubric_name):
         do_filename_to_officium[do_basename] = out_key_base
         return merge_do_propers(propers, redirections, do_redirections, generic,
                                 do_propers_base, do_basename, out_key_base,
-                                options, do_rubric_name, extra_rubrics)
+                                options, do_rubric_name, extra_rubrics,
+                                calpoint, calendar_descs)
 
-    for (entry, descs) in calendar_data.dictionary.items():
+    for (entry, calendar_descs) in calendar_data.dictionary.items():
         if not entry.startswith('calendarium/'):
             continue
         calpoint = entry[len('calendarium/'):]
@@ -890,9 +1096,12 @@ def propers(calendar_data, options, do_rubric_name):
             'Sancti' if re.match(r'\d\d-\d\d$', calpoint) else 'Tempora',
             do_calpoint,
         )
-        # XXX: descs[0] is wrong.
-        out_key_base = make_proper_path(descs[0], calpoint)
+        out_key_base = make_proper_path(calendar_descs[0], calpoint)
         merge()
+
+    # These are referenced by merge(), but they're only meaningful in the above
+    # loop.  Reset them so that we catch any subsequent accidental accesses.
+    calendar_descs = calpoint = None
 
     # August-November weeks.
     for day in ('%02d%d-%d' % x
@@ -911,9 +1120,6 @@ def propers(calendar_data, options, do_rubric_name):
     out_key_base = None
     for basename in ["Psalmi major", "Major Special", "Prayers", "Doxologies"]:
         do_basename = os.path.join('Psalterium', basename)
-        merge()
-    for basename in ["Vespera"]:
-        do_basename = os.path.join('Ordinarium', basename)
         merge()
 
     for psalm_range in do_to_officium_psalm:
