@@ -1,3 +1,5 @@
+import re
+
 from officium.offices import Rite, Standing
 from officium.calendar import CalendarResolver, Resolution
 from officium.offices import (
@@ -365,16 +367,18 @@ class CalendarResolverDA(CalendarResolver):
             # descriptor as it does, and duplicates some things that live in
             # offices.py.
             octave_order = int(desc.get('octavae_ordo', 6))
-            if isinstance(desc_class, Sunday):
-                rank = 2 if re.match(r'ma[ij]or', desc['status']) else 3
-            elif isinstance(desc_class, Feria):
-                rank = (1 if re.match(r'privilegiata', desc['status']) else
-                        3 if re.match(r'ma[ij]or', desc['status']) else 4)
-            elif isinstance(desc_class, Feast):
+            status = desc.get('status', 'minor')
+            if issubclass(desc_class, Sunday):
+                # The second-class greater Sundays all have explicit entries.
+                rank = 1 if re.match(r'ma[ij]or', status) else 3
+            elif issubclass(desc_class, Feria):
+                rank = (1 if re.match(r'privilegiata', status) else
+                        3 if re.match(r'ma[ij]or', status) else 4)
+            elif issubclass(desc_class, Feast):
                 rank = 4 if desc['ritus'] == 'simplex' else 3
-            elif isinstance(desc_class, OctaveDay):
+            elif issubclass(desc_class, OctaveDay):
                 rank = 1 if octave_order <= 2 else 3 if octave_order <= 4 else 4
-            elif isinstance(desc_class, WithinOctave):
+            elif issubclass(desc_class, WithinOctave):
                 rank = min(octave_order, 3)
             else:
                 rank = 4

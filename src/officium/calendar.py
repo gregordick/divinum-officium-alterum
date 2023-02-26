@@ -201,7 +201,7 @@ class CalendarResolver(ABC):
         # which things get complicated.
         pent22 = pentecost + 22 * 7
         if sunday <= pent22:
-            return "Pent%d" % ((sunday - pentecost) // 7,)
+            return "Pent%02d" % ((sunday - pentecost) // 7,)
 
         advent = cls.advent_sunday(date.year)
 
@@ -364,7 +364,7 @@ class CalendarResolver(ABC):
                  for week in range(1, 7) for day in range(7)),
                 ('Pasc%d-%d' % (week, day)
                  for week in range(8) for day in range(7)),
-                ('Pent%d-%d' % (week, day)
+                ('Pent%02d-%d' % (week, day)
                  for week in range(1, 25) for day in range(7)),
             )
         }
@@ -701,6 +701,7 @@ class CalendarResolver(ABC):
                                            else date)
         season_keys = [reading_day] if reading_day else []
 
+        lauds_offices = [today[0]]
         vespers_offices = [office]
         # Handle the case where two offices are said together.  We assume that
         # this can only happen when the office is of the preceding.
@@ -716,7 +717,7 @@ class CalendarResolver(ABC):
         if self.want_suffrages(temporal_calpoint, office, commemorations):
             commemorations += self.suffrages(season, office, commemorations)
 
-        hour_classes = self.hour_classes(office)
+        lauds_classes = [self.hour_classes(x).lauds for x in today]
         vespers_classeses = [self.hour_classes(x) for x in vespers_offices]
         vespers_classes = [
             vc.second_vespers if ofc in occurring else vc.first_vespers
@@ -724,6 +725,13 @@ class CalendarResolver(ABC):
         ]
 
         return OrderedDict([
+            # XXX: commemorations specifies Vespers commems, so not right to
+            # pass it to Lauds here.
+            ('lauds', [cls(date, self._data_map, self._index, self, season,
+                           season_keys, doxology, lauds_office, today,
+                           commemorations)
+                       for (cls, lauds_office) in zip(lauds_classes,
+                                                      lauds_offices)]),
             ('vespers', [cls(date, self._data_map, self._index, self, season,
                              season_keys, doxology, vespers_office, today,
                              concurring,

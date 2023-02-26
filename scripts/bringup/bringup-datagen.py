@@ -36,6 +36,14 @@ def terminatur_post_nonam(desc):
     add_rubric(desc, 'officium terminatur post nonam')
 
 
+def make_do_basename(calpoint):
+    do_calpoint = re.sub(r'Pent(\d)-', r'Pent0\1-', calpoint)
+    return os.path.join(
+        'Sancti' if re.match(r'\d\d-\d\d$', calpoint) else 'Tempora',
+        do_calpoint,
+    )
+
+
 def make_descriptor(key, calcalc_lines, do_rubric_name):
     desc = {}
 
@@ -141,8 +149,12 @@ def make_descriptor(key, calcalc_lines, do_rubric_name):
     for remaining_line in calcalc_lines:
         if remaining_line.startswith('octid='):
             desc['octavae_nomen'] = remaining_line[6:].lower()
+        elif remaining_line.startswith('file='):
+            desc['do_basename'] = remaining_line[5:].lower()
         elif remaining_line == 'Officium terminatur post Nonam':
             terminatur_post_nonam(desc)
+
+    desc.setdefault('do_basename', make_do_basename(key.removeprefix('calendarium/')))
 
     if re.search(r'Quad6-[456]', key):
         desc['officium'] = 'tridui-sacri'
@@ -774,6 +786,7 @@ def merge_do_section(propers, redirections, do_redirections, generic, options,
                 if (com['do-ref-key'] is None or
                     re.match(r'Oratio\d?(\s+(proper|Gregem|proper Gregem))?',
                              com['do-ref-key'])):
+                    com['do-ref-key'] = None
                     have_redirect = True
                     break
                 else:
@@ -814,6 +827,7 @@ def merge_do_section(propers, redirections, do_redirections, generic, options,
                     com_redirs = {
                         base_path + suffixes[digit]:
                         (com['do-ref-basename'],
+                         # TODO: Is it always safe to append the digit?  Can do-ref-key be something like Oratio proper?  Yes, it can, and so it's no safe; and moreover, what if do-ref-key is not a thing that should have a digit applied?  I think DO would try the digitised version first, and then fall back.
                          f"{com['do-ref-key']} {digit}")
                     }
                 else:
@@ -963,18 +977,22 @@ def parse_commemorations(lines):
             assert next_line.startswith('$Oremus')
             prayer = next(lines_iter)
             conclusion = next(lines_iter)
-            if conclusion == '_':
-                # This is the case where we're in a non-final commemoration,
-                # and DO simply omitted the conclusion of the collect in the
-                # datafile.  Ho hum.  Let's just guess that it's Per Dominum.
-                conclusion = '$Per Dominum'
-            else:
-                # If we have a next line, it must be '_' as a separator between
-                # multiple commemorations.  If we don't have a next line, we'll
-                # fall into the "except" block.
-                assert next(lines_iter) == '_'
-
-            commem['oratio'] = [prayer, conclusion]
+            try:
+                if conclusion == '_':
+                    # This is the case where we're in a non-final
+                    # commemoration, and DO simply omitted the conclusion of
+                    # the collect in the datafile.  Ho hum.  Let's just guess
+                    # that it's Per Dominum.  TODO: Check all of these.
+                    print(f"WARNING: Guessing conclusion in {commem} for {prayer}",
+                          file=sys.stderr)
+                    conclusion = '$Per Dominum'
+                else:
+                    # If we have a next line, it must be '_' as a separator
+                    # between multiple commemorations.  If we don't have a next
+                    # line, we'll fall into the outer "except" block.
+                    assert next(lines_iter) == '_'
+            finally:
+                commem['oratio'] = [prayer, conclusion]
         except StopIteration:
             # This branch catches the case where we run out of lines in the
             # middle of parsing a commemoration.  This is not necessarily
@@ -1091,11 +1109,7 @@ def propers(calendar_data, options, do_rubric_name):
         if not entry.startswith('calendarium/'):
             continue
         calpoint = entry[len('calendarium/'):]
-        do_calpoint = re.sub(r'Pent(\d)-', r'Pent0\1-', calpoint)
-        do_basename = os.path.join(
-            'Sancti' if re.match(r'\d\d-\d\d$', calpoint) else 'Tempora',
-            do_calpoint,
-        )
+        do_basename = make_do_basename(calpoint)
         out_key_base = make_proper_path(calendar_descs[0], calpoint)
         merge()
 
