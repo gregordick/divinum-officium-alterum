@@ -725,11 +725,9 @@ class CalendarResolver(ABC):
         ]
 
         return OrderedDict([
-            # XXX: commemorations specifies Vespers commems, so not right to
-            # pass it to Lauds here.
             ('lauds', [cls(date, self._data_map, self._index, self, season,
                            season_keys, doxology, lauds_office, today,
-                           commemorations)
+                           today[1:])
                        for (cls, lauds_office) in zip(lauds_classes,
                                                       lauds_offices)]),
             ('vespers', [cls(date, self._data_map, self._index, self, season,
