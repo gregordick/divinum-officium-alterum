@@ -24,5 +24,6 @@ scripts/bringup/mk-data.sh "${tempdir}"/{divinum-officium,do-calcalc,data}
 PYTHONPATH=src scripts/bringup/bringup.py \
   -r divino \
   --render \
+  --hour=vespers \
   ${tempdir}/data/divino/{calendar,propers/latin}.yaml \
   1918-4-8

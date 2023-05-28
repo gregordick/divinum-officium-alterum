@@ -40,6 +40,7 @@ def parse_args():
     parser.add_argument('--render', action='store_true')
     parser.add_argument('--verbose', '-v', action='store_true')
     parser.add_argument('--titular-path', '-t')
+    parser.add_argument('--hour')
     parser.add_argument('generic_file')
     parser.add_argument('lang_data_file')
     parser.add_argument('date')
@@ -61,13 +62,17 @@ def main():
     resolver._resolve_transfer_cache_base = current_date
 
     while current_date <= end_date:
-        offices = resolver.offices(current_date)['vespers']
-        if options.verbose or current_date == end_date:
-            print("Date:", current_date)
-            for office in offices:
-                print("Office:", office._office)
-                print("Commemorations:", office._commemorations)
-                print("Concurring:", office._concurring)
+        hours = resolver.offices(current_date).items()
+        if options.hour is not None:
+            hours = ((name, offices) for (name, offices) in hours
+                     if name == options.hour)
+        for (_, offices) in hours:
+            if options.verbose or current_date == end_date:
+                print("Date:", current_date)
+                for office in offices:
+                    print("Office:", office, office._office)
+                    print("Commemorations:", office._commemorations)
+                    print("Concurring:", office._concurring)
             render(offices, lang_data if options.render else None)
         current_date += 1
 
