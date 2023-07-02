@@ -1,15 +1,15 @@
+from abc import ABC, abstractmethod
 from . import offices
 from . import parts
 from . import psalmish
 from . import util
 
-class Vespers:
+class LaudsAndVespers(ABC):
     default_psalmish_class = parts.PsalmishWithGloria
     preces_key = 'ordinarium/ad-vesperas/preces-feriales'
 
     def __init__(self, date, generic_data, index, calendar_resolver, season,
-                 season_keys, doxology, office, morning_offices, concurring,
-                 commemorations):
+                 season_keys, doxology, office, commemorations):
         self._date = date
         self._generic_data = generic_data
         self._index = index
@@ -17,19 +17,6 @@ class Vespers:
         self._season = season
         self._season_keys = season_keys
         self._office = office
-        self._is_first = office in concurring
-
-        # These are the offices that were said this morning at Lauds, and not
-        # only those that have second Vespers.  We need these in order to
-        # detect the case where the ferial preces are to be said at Vespers
-        # on account of the morning's preces-inducing office, despite that
-        # office having ended.
-        self._morning_offices = morning_offices
-
-        # Knowing the concurring offices allows us to determine whether a
-        # commemoration is for first Vespers.
-        self._concurring = concurring
-
         self._commemorations = list(commemorations)
 
         # Template context for the office of the day.  TODO: Handle offices
@@ -41,6 +28,35 @@ class Vespers:
                                                     self._primary_template_context)
         else:
             self._doxology = None
+
+    def __str__(self):
+        return f"{self.__class__.__name__}: {self._office}"
+
+    def make_template_context(self, office):
+        cases = [
+            'nominativo',
+            'vocativo',
+            'accusativo',
+            'genitivo',
+            'dativo',
+            'ablativo',
+        ]
+
+        prefix_map = {
+            # XXX: Using keys[0] is wrong; factor out multi-key lookup so that
+            # TemplateContext can use it too.
+            'nomen_': office.keys[0] + '/nomen/',
+            'nomen_titularis_': self._calendar_resolver.titular_path,
+        }
+
+        return parts.TemplateContext(
+            direct_symbols={},
+            indirect_symbols={
+                prefix + case: path + case if path is not None else None
+                for case in cases
+                for (prefix, path) in prefix_map.items()
+            },
+        )
 
     def lookup_order(self, office, items, use_commons=True):
         paths = []
@@ -87,22 +103,14 @@ class Vespers:
             for item in items:
                 yield '/'.join([path, item])
 
-    def lookup(self, office, is_first, *items, **kwargs):
-        base = [
-            ['ad-i-vesperas' if is_first else 'ad-ii-vesperas'],
-            ['ad-vesperas'],
-            [],
-        ]
+    def lookup(self, office, bases, *items, **kwargs):
         return self._index.lookup(
             self.lookup_order(
                 office,
-                ('/'.join(b + [item]) for item in items for b in base),
+                ('/'.join(b + [item]) for item in items for b in bases),
                 **kwargs
             )
         )
-
-    def lookup_main(self, *items, **kwargs):
-        return self.lookup(self._office, self._is_first, *items, **kwargs)
 
     def psalmody(self, antiphon_class=parts.Antiphon):
         use_commons = self._calendar_resolver.uses_common_for_psalmody(self._office)
@@ -135,23 +143,22 @@ class Vespers:
                                      })
         yield from self.versicle_and_response(vr_class)
 
-    def magnificat(self, antiphon_class=parts.Antiphon):
+    @property
+    @abstractmethod
+    def gospel_canticle_path(self):
+        raise NotImplementedError()
+
+    def gospel_canticle(self, antiphon_class=parts.Antiphon):
         path = self.lookup_main('ad-canticum')
-        mag_ant = parts.StructuredLookup(path, antiphon_class,
-                                         self._primary_template_context)
-        # XXX: Slashes.
-        mag = self.default_psalmish_class('ad-vesperas/magnificat')
-        yield parts.PsalmishWithAntiphon(mag_ant, [mag],
+        antiphon = parts.StructuredLookup(path, antiphon_class,
+                                          self._primary_template_context)
+        canticle = self.default_psalmish_class(self.gospel_canticle_path)
+        yield parts.PsalmishWithAntiphon(antiphon, [canticle],
                                          self._primary_template_context)
 
+    @abstractmethod
     def have_ferial_preces(self):
-        # The preces should be said if they were said at Lauds and Vespers are
-        # not of the following.
-        return all([
-            self._calendar_resolver.has_ferial_preces(self._morning_offices[0],
-                                                      self._date),
-            not self._is_first,
-        ])
+        raise NotImplementedError()
 
     def kyrie(self):
         yield parts.StructuredLookup('ordinarium/kyrie-simplex',
@@ -246,7 +253,7 @@ class Vespers:
 
         yield from self.psalmody(antiphon_class)
         yield from self.chapter_hymn_and_verse(vr_class)
-        yield from self.magnificat(antiphon_class)
+        yield from self.gospel_canticle(antiphon_class)
         if self.have_ferial_preces():
             yield from self.kyrie()
             yield from self.preces()
@@ -254,37 +261,56 @@ class Vespers:
         yield from self.commemorations(antiphon_class, vr_class)
         yield from self.conclusion()
 
-    def make_template_context(self, office):
-        cases = [
-            'nominativo',
-            'vocativo',
-            'accusativo',
-            'genitivo',
-            'dativo',
-            'ablativo',
+
+class Vespers(LaudsAndVespers):
+    def __init__(self, date, generic_data, index, calendar_resolver, season,
+                 season_keys, doxology, office, morning_offices, concurring,
+                 commemorations):
+        super().__init__(date, generic_data, index, calendar_resolver, season,
+                         season_keys, doxology, office, commemorations)
+
+        # These are the offices that were said this morning at Lauds, and not
+        # only those that have second Vespers.  We need these in order to
+        # detect the case where the ferial preces are to be said at Vespers
+        # on account of the morning's preces-inducing office, despite that
+        # office having ended.
+        self._morning_offices = morning_offices
+
+        # Knowing the concurring offices allows us to determine whether a
+        # commemoration is for first Vespers.
+        self._concurring = concurring
+        self._is_first = office in concurring
+
+    def lookup(self, office, is_first, *items, **kwargs):
+        bases = [
+            ['ad-i-vesperas' if is_first else 'ad-ii-vesperas'],
+            ['ad-vesperas'],
+            [],
         ]
+        return super().lookup(office, bases, *items, **kwargs)
 
-        prefix_map = {
-            # XXX: Using keys[0] is wrong; factor out multi-key lookup so that
-            # TemplateContext can use it too.
-            'nomen_': office.keys[0] + '/nomen/',
-            'nomen_titularis_': self._calendar_resolver.titular_path,
-        }
+    def lookup_main(self, *items, **kwargs):
+        return self.lookup(self._office, self._is_first, *items, **kwargs)
 
-        return parts.TemplateContext(
-            direct_symbols={},
-            indirect_symbols={
-                prefix + case: path + case if path is not None else None
-                for case in cases
-                for (prefix, path) in prefix_map.items()
-            },
-        )
+    @property
+    def gospel_canticle_path(self):
+        # XXX: Slashes.
+        return 'ad-vesperas/magnificat'
+
+    def have_ferial_preces(self):
+        # The preces should be said if they were said at Lauds and Vespers are
+        # not of the following.
+        return all([
+            self._calendar_resolver.has_ferial_preces(self._morning_offices[0],
+                                                      self._date),
+            not self._is_first,
+        ])
 
 
 class HolySaturdayVespers(Vespers):
     def resolve(self):
         yield from self.psalmody(parts.AntiphonWithAlleluia)
-        yield from self.magnificat(parts.AntiphonWithAlleluia)
+        yield from self.gospel_canticle(parts.AntiphonWithAlleluia)
         yield from self.oration()
         yield from self.conclusion()
 
@@ -303,7 +329,7 @@ class VespersOfTheDead(Vespers):
     def resolve(self):
         yield from self.psalmody()
         yield from self.versicle_and_response()
-        yield from self.magnificat()
+        yield from self.gospel_canticle()
         yield from self.preces()
         yield from self.oration()
         yield from self.conclusion()
@@ -322,7 +348,7 @@ class TriduumVespers(Vespers):
 
     def resolve(self):
         yield from self.psalmody()
-        yield from self.magnificat()
+        yield from self.gospel_canticle()
         yield from self.christus_factus_est()
         yield from self.miserere()
         yield from self.oration()
