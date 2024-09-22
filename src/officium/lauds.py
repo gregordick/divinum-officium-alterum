@@ -1,11 +1,23 @@
 from . import psalmish
-
 # XXX!  Most of vespers.py should become a common module.
-from .vespers import Vespers
-class Lauds(Vespers):
-    def __init__(self, *args):
-        args = list(args)
-        super().__init__(*args[:-1], concurring=[], commemorations=args[-1])
+from .vespers import LaudsAndVespers
+
+
+class Lauds(LaudsAndVespers):
+    def lookup(self, office, *items, **kwargs):
+        bases = [
+            ['ad-laudes'],
+        ]
+        return super().lookup(office, bases, *items, **kwargs)
+
+    @property
+    def gospel_canticle_path(self):
+        # XXX: Slashes.
+        return 'ad-laudes/benedictus'
+
+    def have_ferial_preces(self):
+        return self._calendar_resolver.has_ferial_preces(self._office,
+                                                         self._date)
 
 
 class EasterOctaveLauds(Lauds):

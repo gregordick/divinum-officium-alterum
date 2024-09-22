@@ -726,8 +726,7 @@ class CalendarResolver(ABC):
 
         return OrderedDict([
             ('lauds', [cls(date, self._data_map, self._index, self, season,
-                           season_keys, doxology, lauds_office, today,
-                           today[1:])
+                           season_keys, doxology, lauds_office, today[1:])
                        for (cls, lauds_office) in zip(lauds_classes,
                                                       lauds_offices)]),
             ('vespers', [cls(date, self._data_map, self._index, self, season,

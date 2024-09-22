@@ -112,6 +112,9 @@ class LaudsAndVespers(ABC):
             )
         )
 
+    def lookup_main(self, *items, **kwargs):
+        return self.lookup(self._office, *items, **kwargs)
+
     def psalmody(self, antiphon_class=parts.Antiphon):
         use_commons = self._calendar_resolver.uses_common_for_psalmody(self._office)
         antiphons = self.lookup_main('antiphonae', use_commons=use_commons)
