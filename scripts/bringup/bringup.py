@@ -6,6 +6,7 @@ import argparse
 
 from officium.bringup import bringup_components, make_date, resolvers
 from officium.parts import Antiphon, StructuredLookup, Versicle, VersicleResponse, Psalmody
+from officium.vespers import Vespers
 
 
 def render_one(thing):
@@ -72,7 +73,8 @@ def main():
                 for office in offices:
                     print("Office:", office, office._office)
                     print("Commemorations:", office._commemorations)
-                    print("Concurring:", office._concurring)
+                    if isinstance(office, Vespers):
+                        print("Concurring:", office._concurring)
             render(offices, lang_data if options.render else None)
         current_date += 1
 
