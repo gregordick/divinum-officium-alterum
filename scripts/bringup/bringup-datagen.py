@@ -408,13 +408,15 @@ def make_out_key(key, do_basename):
         out_key = 'ad-ii-vesperas/versiculum'
     elif key == 'Versum 2' and 'Pasc0-' in do_basename:
         out_key = 'haec-dies'
-    elif re.match(r'Day\d Vespera$', key):
+    elif re.match(r'Day\d (Laudes1?|Vespera)$', key):
+        # TODO: Laudes2
         day = int(key[3])
+        hour = 'vesperas' if key.endswith('Vespera') else 'laudes'
         # This key is either the chapter or the antiphons and psalms, depending
         # on which file it came from.
         part = ('capitulum' if do_basename.endswith('Major Special')
                 else 'antiphonae')
-        out_key = 'psalterium/%s/ad-vesperas/%s' % (util.day_ids[day], part)
+        out_key = f'psalterium/{util.day_ids[day]}/ad-{hour}/{part}'
     elif re.match(r'Hymnus Day\d Vespera$', key):
         day = int(key[10])
         out_key = 'psalterium/%s/ad-vesperas/hymnus' % (util.day_ids[day],)
