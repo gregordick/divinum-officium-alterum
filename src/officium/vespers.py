@@ -115,6 +115,9 @@ class LaudsAndVespers(ABC):
     def lookup_main(self, *items, **kwargs):
         return self.lookup(self._office, *items, **kwargs)
 
+    def lookup_commem(self, commem, *items, **kwargs):
+        return self.lookup(commem, *items, **kwargs)
+
     def psalmody(self, antiphon_class=parts.Antiphon):
         use_commons = self._calendar_resolver.uses_common_for_psalmody(self._office)
         antiphons = self.lookup_main('antiphonae', use_commons=use_commons)
@@ -198,14 +201,13 @@ class LaudsAndVespers(ABC):
 
     def commemorations(self, antiphon_class, vr_class):
         for i, commem in enumerate(self._commemorations):
-            is_first = commem in self._concurring
-            versicle_pair = self.lookup(commem, is_first, 'versiculum')
-            oration_path = self.lookup(commem, is_first,
-                                       'oratio-super-populum', 'oratio')
+            versicle_pair = self.lookup_commem(commem, 'versiculum')
+            oration_path = self.lookup_commem(commem, 'oratio-super-populum',
+                                              'oratio')
             template_context = self.make_template_context(commem)
             part_list = [
-                parts.StructuredLookup(self.lookup(commem, is_first,
-                                                   'ad-canticum'),
+                parts.StructuredLookup(self.lookup_commem(commem,
+                                                          'ad-canticum'),
                                        antiphon_class, template_context),
                 parts.StructuredLookup(versicle_pair, vr_class,
                                        template_context),
@@ -294,6 +296,10 @@ class Vespers(LaudsAndVespers):
 
     def lookup_main(self, *items, **kwargs):
         return self.lookup(self._office, self._is_first, *items, **kwargs)
+
+    def lookup_commem(self, commem, *items, **kwargs):
+        return self.lookup(commem, commem in self._concurring, *items,
+                           **kwargs)
 
     @property
     def gospel_canticle_path(self):
