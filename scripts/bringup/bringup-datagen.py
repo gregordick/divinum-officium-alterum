@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 """Script to generate bringup datafiles from protoype calcalc calendar and DO
 datafiles.

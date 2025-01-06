@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 """Generate a transfer table for the specified year for use with the original
 Perl implementation of Divinum Officium.
