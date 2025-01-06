@@ -595,9 +595,10 @@ def apply_inclusion(line, do_propers_base, do_basename, do_key, do_rubric_name,
                     options):
     try:
         basename, key, subs = re.match(inclusion_regex, line).groups()
+        basename = basename or do_basename
         key = key or do_key
         do_propers = load_do_file(do_propers_base, do_rubric_name, options,
-                                  basename or do_basename)
+                                  basename)
         included = do_propers[key]
     except (AttributeError, FileNotFoundError, KeyError):
         yield line
