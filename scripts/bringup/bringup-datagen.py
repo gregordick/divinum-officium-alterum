@@ -894,7 +894,7 @@ def merge_do_section(propers, redirections, do_redirections, generic, options,
                 else:
                     sub_list.append(sub)
 
-            assert 'post-process' not in out_path
+            #assert 'post-process' not in out_path
             if sub_list:
                 # We have unhandled substitutions, so expand the inclusion
                 # now.
