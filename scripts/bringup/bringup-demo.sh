@@ -9,8 +9,13 @@ trap "rm -rf '${tempdir}'" EXIT
 
 (
   cd "${tempdir}"
-  # Clone Divinum Officium so that we can get at its datafiles.
-  git clone --depth 1 https://github.com/DivinumOfficium/divinum-officium/
+  # Clone Divinum Officium so that we can get at its datafiles.  The tag to
+  # check out is one that happens to be good.  Subsequent upstream DO changes
+  # break some of the bringup scripting.  The newer-do-compat branch has some
+  # WIP changes to adapt accordingly, but until these are ready, stick with the
+  # old commit.
+  git clone --depth 1 -b for-officium-bringup-demo \
+    https://github.com/gregordick/divinum-officium/
   # The calcalc branch is a now-dormant effort to rewrite the calendar logic.
   # It contains a calendar manifest that we need.
   git clone --depth 1 -b calcalc \
