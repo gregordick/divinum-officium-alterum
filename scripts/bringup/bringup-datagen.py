@@ -507,7 +507,7 @@ do_to_officium_psalm = {
     #     ($num) = $ARGV =~ /(2\d\d)/;
     #     print lc("($num,): lambda number: '"'"'cantici/$title-$incipit'"'"',\n");
     #     close ARGV;
-    #   }' web/www/horas/Latin/psalms1/Psalm2??.txt
+    #   }' web/www/horas/Latin/Psalterium/Psalmorum/Psalm2??.txt
     (210,): lambda number: 'cantici/trium-puerorum-benedicite-omnia',
     (211,): lambda number: 'cantici/david-benedictus-es',
     (212,): lambda number: 'cantici/tobiae-magnus-es',
@@ -1140,13 +1140,19 @@ def propers(calendar_data, options, do_rubric_name):
         merge()
 
     out_key_base = None
-    for basename in ["Psalmi major", "Major Special", "Prayers", "Doxologies"]:
-        do_basename = os.path.join('Psalterium', basename)
+    for components in [
+            ("Psalmi", "Psalmi major"),
+            ("Special", "Major Special"),
+            ("Common", "Prayers"),
+            ("Doxologies",),
+        ]:
+        do_basename = os.path.join('Psalterium', *components)
         merge()
 
     for psalm_range in do_to_officium_psalm:
         for psalm in psalm_range:
-            with open(os.path.join(do_propers_base, 'psalms1',
+            with open(os.path.join(do_propers_base, 'Psalterium',
+                                   'Psalmorum',
                                    'Psalm%d.txt' % (psalm,))) as f:
                 raw = [line.strip() for line in f.readlines()]
             propers['psalterium/' + do_to_officium_psalm[psalm_range](psalm)] = raw
