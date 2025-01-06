@@ -27,8 +27,7 @@ datagen() {
 }
 
 for rubric in divino rubricarum; do
-  datagen $rubric propers propers/latin.yaml &
-  datagen $rubric propers propers/english.yaml --language="English" &
-  datagen $rubric generic calendar.yaml &
-  wait
+  datagen $rubric propers propers/latin.yaml
+  datagen $rubric propers propers/english.yaml --language="English"
+  datagen $rubric generic calendar.yaml
 done
