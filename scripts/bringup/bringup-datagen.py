@@ -486,7 +486,7 @@ def make_full_path(out_key_base, out_key):
 
 
 
-do_to_officium_psalm = {
+do_range_to_officium_psalm = {
     range(1, 93): lambda number: 'psalmi/%d' % (number,),
     range(95, 151): lambda number: 'psalmi/%d' % (number,),
     (231,): lambda number: 'ad-laudes/benedictus',
@@ -551,7 +551,11 @@ do_to_officium_psalm = {
     (267,): lambda number: 'cantici/isaiae-audite-qui-longe',
     (268,): lambda number: 'cantici/ecclesiasticae-miserere-plebi',
 }
-
+do_to_officium_psalm = {
+    do_psalm_no: func(do_psalm_no)
+    for (do_psalm_range, func) in do_range_to_officium_psalm.items()
+    for do_psalm_no in do_psalm_range
+}
 
 def name_case(do_basename, do_key):
     if do_basename.endswith('C1'):
@@ -622,6 +626,21 @@ def apply_inclusion(line, do_propers_base, do_basename, do_key, do_rubric_name,
             yield apply_subs_to_str(subs, subline)
 
 
+def do_to_officium_psalm_spec(do_psalm_spec):
+    """Map <do_psalm_no>(<range>) to <officium_psalm_spec>(<range>)."""
+    try:
+        range_start = do_psalm_spec.index('(')
+        do_psalm_no, range_spec = (do_psalm_spec[:range_start],
+                                   do_psalm_spec[range_start:])
+    except ValueError:
+        do_psalm_no = do_psalm_spec
+        range_spec = None
+
+    officium_psalm_spec = do_to_officium_psalm[int(do_psalm_no)]
+    if range_spec is not None:
+        officium_psalm_spec += range_spec
+    return officium_psalm_spec
+
 def merge_do_section_to_path(propers, generic, do_basename, do_key, value,
                              out_path):
     template_var = 'officium.nomen_'
@@ -646,14 +665,15 @@ def merge_do_section_to_path(propers, generic, do_basename, do_key, value,
         try:
             value, psalms = zip(*(entry.split(';;')
                                   for entry in value))
-            generic[out_path[:-len('/antiphonae')] + '/psalmi'] = [
-                ['psalmi/%s' % (p,) for p in psalm_spec.split(';')]
-                for psalm_spec in psalms
-            ]
-            value = list(value)
         except ValueError:
             # Some or all entries were missing psalms.
             pass
+        else:
+            generic[out_path[:-len('/antiphonae')] + '/psalmi'] = [
+                [do_to_officium_psalm_spec(p) for p in psalm_spec.split(';')]
+                for psalm_spec in psalms
+            ]
+            value = list(value)
     elif out_path.endswith('/hymnus'):
         verse = []
         verses = [verse]
@@ -1144,12 +1164,11 @@ def propers(calendar_data, options, do_rubric_name):
         do_basename = os.path.join('Psalterium', basename)
         merge()
 
-    for psalm_range in do_to_officium_psalm:
-        for psalm in psalm_range:
-            with open(os.path.join(do_propers_base, 'psalms1',
-                                   'Psalm%d.txt' % (psalm,))) as f:
-                raw = [line.strip() for line in f.readlines()]
-            propers['psalterium/' + do_to_officium_psalm[psalm_range](psalm)] = raw
+    for psalm in do_to_officium_psalm:
+        with open(os.path.join(do_propers_base, 'psalms1',
+                               'Psalm%d.txt' % (psalm,))) as f:
+            raw = [line.strip() for line in f.readlines()]
+        propers['psalterium/' + do_to_officium_psalm[psalm]] = raw
 
     # The triple "alleluia" antiphon used in Divino and later is synthesised
     # in DO, but it happens to be the same as the antiphon on the Laudate
