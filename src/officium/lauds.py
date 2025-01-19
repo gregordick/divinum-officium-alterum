@@ -7,6 +7,7 @@ class Lauds(LaudsAndVespers):
     def lookup(self, office, *items, **kwargs):
         bases = [
             ['ad-laudes'],
+            [],
         ]
         return super().lookup(office, bases, *items, **kwargs)
 
