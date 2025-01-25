@@ -8,13 +8,13 @@ class LaudsAndVespers(ABC):
     default_psalmish_class = parts.PsalmishWithGloria
     preces_key = 'ordinarium/ad-vesperas/preces-feriales'
 
-    def __init__(self, date, generic_data, index, calendar_resolver, season,
+    def __init__(self, date, generic_data, index, calendar_resolver, seasons,
                  season_keys, doxology, office, commemorations):
         self._date = date
         self._generic_data = generic_data
         self._index = index
         self._calendar_resolver = calendar_resolver
-        self._season = season
+        self._seasons = seasons
         self._season_keys = season_keys
         self._office = office
         self._commemorations = list(commemorations)
@@ -64,8 +64,9 @@ class LaudsAndVespers(ABC):
         for keys in [office.keys] + ([['%s/commune' % (key,)
                                        for key in office.keys]]
                                      if use_commons else []):
-            if self._season:
-                paths += ['%s/%s' % (key, self._season) for key in keys]
+            if self._seasons:
+                paths += ['%s/%s' % (key, season)
+                          for key in keys for season in self._seasons]
             paths += list(keys)
 
         season = [
@@ -88,8 +89,8 @@ class LaudsAndVespers(ABC):
             paths.append('proprium/%s' % (sunday,))
 
         psalter_prefixes = []
-        if self._season:
-            psalter_prefixes.append('/' + self._season)
+        if self._seasons:
+            psalter_prefixes.extend('/' + season for season in self._seasons)
         psalter_prefixes.append('')
         for prefix in psalter_prefixes:
             paths += [
@@ -268,10 +269,10 @@ class LaudsAndVespers(ABC):
 
 
 class Vespers(LaudsAndVespers):
-    def __init__(self, date, generic_data, index, calendar_resolver, season,
+    def __init__(self, date, generic_data, index, calendar_resolver, seasons,
                  season_keys, doxology, office, morning_offices, concurring,
                  commemorations):
-        super().__init__(date, generic_data, index, calendar_resolver, season,
+        super().__init__(date, generic_data, index, calendar_resolver, seasons,
                          season_keys, doxology, office, commemorations)
 
         # These are the offices that were said this morning at Lauds, and not

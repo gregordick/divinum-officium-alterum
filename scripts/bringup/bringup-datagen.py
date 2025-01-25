@@ -417,9 +417,14 @@ def make_out_key(key, do_basename):
         part = ('capitulum' if do_basename.endswith('Major Special')
                 else 'antiphonae')
         out_key = f'psalterium/{util.day_ids[day]}/ad-{hour}/{part}'
-    elif re.match(r'Hymnus Day\d Vespera$', key):
+    elif re.match(r'Hymnus Day(\d) (Laudes\d?|Vespera)$', key):
         day = int(key[10])
-        out_key = 'psalterium/%s/ad-vesperas/hymnus' % (util.day_ids[day],)
+        hour = 'ad-laudes' if 'Laudes' in key else 'ad-vesperas'
+        base = 'psalterium'
+        if key.endswith('Day0 Laudes'):
+            # As opposed to Day0 Laudes2.
+            base += '/in-aestate'
+        out_key = f'{base}/{util.day_ids[day]}/{hour}/hymnus'
     elif key == 'Quad Vespera':
         out_key = 'proprium/de-tempore/quadragesima/in-feriis/ad-vesperas/capitulum'
     elif key == 'Hymnus Quad Vespera':

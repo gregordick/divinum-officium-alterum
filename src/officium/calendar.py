@@ -696,10 +696,14 @@ class CalendarResolver(ABC):
 
         # Get seasonal keys, which in practice means the months from August to
         # November.  These are strictly weekly, so only for Sundays do we have
-        # first Vespers.
-        reading_day = self.reading_day_str(date + 1 if date.day_of_week == 6
-                                           else date)
-        season_keys = [reading_day] if reading_day else []
+        # first Vespers.  TODO: This won't work for Matins, and is wrong in
+        # principle for Lauds.
+        reading_date = date + 1 if date.day_of_week == 6 else date
+        reading_day = self.reading_day(reading_date)
+        if reading_day is not None:
+            season_keys = [self.reading_day_str(reading_date)]
+        else:
+            season_keys = []
 
         lauds_offices = [today[0]]
         vespers_offices = [office]
@@ -724,12 +728,18 @@ class CalendarResolver(ABC):
             for (vc, ofc) in zip(vespers_classeses, vespers_offices)
         ]
 
+        seasons = [season]
+        if 5 <= date.month <= 7 or (reading_day is not None and
+                                    reading_day[1] <= 9):
+            # Invent a season to allow for the summer Matins and Lauds parts.
+            seasons.append('in-aestate')
+
         return OrderedDict([
-            ('lauds', [cls(date, self._data_map, self._index, self, season,
+            ('lauds', [cls(date, self._data_map, self._index, self, seasons,
                            season_keys, doxology, lauds_office, today[1:])
                        for (cls, lauds_office) in zip(lauds_classes,
                                                       lauds_offices)]),
-            ('vespers', [cls(date, self._data_map, self._index, self, season,
+            ('vespers', [cls(date, self._data_map, self._index, self, seasons,
                              season_keys, doxology, vespers_office, today,
                              concurring,
                              self.vespers_commem_filter(commemorations, date,
