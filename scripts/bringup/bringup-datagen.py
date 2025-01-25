@@ -442,9 +442,10 @@ def make_out_key(key, do_basename):
         out_key = 'psalterium/pasc/ad-vesperas/versiculum'
     elif key == 'Hymnus Pasch Vespera':
         out_key = 'psalterium/pasc/ad-vesperas/hymnus'
-    elif re.match(r'Day\d Versum 3$', key):
+    elif re.match(r'Day\d Versum [23]$', key):
         day = int(key[3])
-        out_key = 'psalterium/%s/ad-vesperas/versiculum' % (util.day_ids[day],)
+        hour = 'vesperas' if key.endswith('3') else 'laudes'
+        out_key = f'psalterium/{util.day_ids[day]}/ad-{hour}/versiculum'
     elif key == 'Gloria':
         out_key = 'versiculi/gloria-patri-post-psalmum'
     elif key == 'Requiem':
