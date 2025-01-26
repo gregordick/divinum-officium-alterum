@@ -371,6 +371,8 @@ def make_out_key(key, do_basename):
         return None
     elif key == 'Ant 1':
         out_key = 'ad-i-vesperas/ad-canticum'
+    elif key == 'Ant 2':
+        out_key = 'ad-laudes/ad-canticum'
     elif key == 'Ant 3':
         out_key = 'ad-ii-vesperas/ad-canticum'
     elif key.startswith('Ant Vespera'):
