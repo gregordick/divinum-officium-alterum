@@ -26,12 +26,13 @@ def render(things, lang_data):
         if not isinstance(thing, str):
             try:
                 children = thing.resolve()
-                render(children, lang_data)
             except TypeError:
                 if lang_data:
                     render(thing.resolve(lang_data), lang_data)
                 else:
                     render_one(repr(thing))
+            else:
+                render(children, lang_data)
 
 
 def parse_args():
