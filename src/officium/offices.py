@@ -19,6 +19,7 @@ class Standing:
 
 class Office:
     extra_keys = []
+    penitential_lauds = False
 
     def __init__(self, desc):
         self.desc = dict(desc)
@@ -159,6 +160,7 @@ class AdventSunday(Sunday):
 
 
 class AdventFeria(Feria):
+    penitential_lauds = True
     def title(self):
         return "Dominica %s. Adventus" % (roman(self.week_num),)
 
@@ -167,14 +169,18 @@ class BVMOnSaturday(Feast): pass
 
 class Vigil(Office): pass
 
-class SeptuagesimatideFeria(Feria): pass
-class SeptuagesimatideSunday(Sunday): pass
+class SeptuagesimatideFeria(Feria):
+    penitential_lauds = True
+
+class SeptuagesimatideSunday(Sunday):
+    penitential_lauds = True
 
 class LentenFeria(Feria):
     extra_keys = [
         'proprium/de-tempore/quadragesima/in-feriis',
         'proprium/de-tempore/quadragesima',
     ]
+    penitential_lauds = True
 
 # For Ash Wednesday and the three following days.  XXX: This is a bit ugly.
 class EarlyLentenFeria(LentenFeria):
@@ -184,6 +190,7 @@ class LentenSunday(Sunday):
     extra_keys = [
         'proprium/de-tempore/quadragesima',
     ]
+    penitential_lauds = True
 
 class PassiontideFeria(LentenFeria):
     extra_keys = [

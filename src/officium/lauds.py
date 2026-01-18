@@ -9,6 +9,8 @@ class Lauds(LaudsAndVespers):
             ['ad-laudes'],
             [],
         ]
+        if self._office.penitential_lauds:
+            bases.insert(0, ['ad-laudes-ii'])
         return super().lookup(office, bases, *items, **kwargs)
 
     @property
