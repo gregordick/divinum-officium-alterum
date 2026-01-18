@@ -410,10 +410,11 @@ def make_out_key(key, do_basename):
         out_key = 'ad-ii-vesperas/versiculum'
     elif key == 'Versum 2' and 'Pasc0-' in do_basename:
         out_key = 'haec-dies'
-    elif re.match(r'Day\d (Laudes1?|Vespera)$', key):
-        # TODO: Laudes2
+    elif re.match(r'Day\d (Laudes[12]?|Vespera)$', key):
         day = int(key[3])
-        hour = 'vesperas' if key.endswith('Vespera') else 'laudes'
+        hour = ('vesperas' if key.endswith('Vespera') else
+                'laudes'   if key.endswith('Laudes1') else
+                'laudes-ii')
         # This key is either the chapter or the antiphons and psalms, depending
         # on which file it came from.
         part = ('capitulum' if do_basename.endswith('Major Special')
@@ -682,6 +683,9 @@ def merge_do_section_to_path(propers, generic, do_basename, do_key, value,
                 for psalm_spec in psalms
             ]
             value = list(value)
+            if not any(value):
+                # No antiphons, only psalms.  Nothing more to do.
+                return
     elif out_path.endswith('/hymnus'):
         verse = []
         verses = [verse]
