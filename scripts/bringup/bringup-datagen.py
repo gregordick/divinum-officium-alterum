@@ -375,8 +375,10 @@ def make_out_key(key, do_basename):
         out_key = 'ad-laudes/ad-canticum'
     elif key == 'Ant 3':
         out_key = 'ad-ii-vesperas/ad-canticum'
-    elif key.startswith('Ant Vespera'):
-        if key == 'Ant Vespera 1':
+    elif re.match(r'Ant (Vespera|Laudes)', key):
+        if key == 'Ant Laudes':
+            out_key = 'ad-laudes'
+        elif key == 'Ant Vespera 1':
             out_key = 'ad-i-vesperas'
         elif key == 'Ant Vespera 3':
             out_key = 'ad-ii-vesperas'
@@ -672,7 +674,7 @@ def merge_do_section_to_path(propers, generic, do_basename, do_key, value,
     if out_path.endswith('/antiphonae'):
         # Separate out the psalms.
         try:
-            value, psalms = zip(*(entry.split(';;')
+            value, psalms = zip(*(entry.rstrip(';;').split(';;')
                                   for entry in value))
         except ValueError:
             # Some or all entries were missing psalms.
