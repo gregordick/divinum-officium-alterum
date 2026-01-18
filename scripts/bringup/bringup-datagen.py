@@ -451,6 +451,9 @@ def make_out_key(key, do_basename):
         day = int(key[3])
         hour = 'vesperas' if key.endswith('3') else 'laudes'
         out_key = f'psalterium/{util.day_ids[day]}/ad-{hour}/versiculum'
+    elif key == 'Day02 Versum 2':
+        # Sundays in Septuagesimatide.
+        out_key = f'psalterium/{util.day_ids[0]}/ad-laudes-ii/versiculum'
     elif key == 'Gloria':
         out_key = 'versiculi/gloria-patri-post-psalmum'
     elif key == 'Requiem':
