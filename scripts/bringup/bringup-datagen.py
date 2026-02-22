@@ -768,6 +768,9 @@ def merge_do_section(propers, redirections, do_redirections, generic, options,
                 propers[out_path] = names
             elif line.casefold() == 'preces feriales':
                 dict_list_append(extra_rubrics, out_key_base, 'preces feriales')
+            elif line.startswith('Psalmi Dominica'):
+                out_key_psalms = make_full_path(out_key_base, 'psalmi')
+                redirections[out_key_psalms] = 'psalterium/dominica/ad-laudes/psalmi'
     elif do_key.startswith('Commemoratio'):
         if do_key == 'Commemoratio4':
             # St Peter or St Paul.
