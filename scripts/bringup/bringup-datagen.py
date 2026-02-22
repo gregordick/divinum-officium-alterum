@@ -1174,8 +1174,9 @@ def propers(calendar_data, options, do_rubric_name):
         out_key_base = 'proprium/%s' % (day,)
         merge()
 
-    for common in (key[8:] for key in redirections.values()
-                   if key.startswith('commune/')):
+    commons = list(key[8:] for key in redirections.values()
+                   if key.startswith('commune/'))
+    for common in commons:
         do_basename = os.path.join('Commune', common)
         out_key_base = 'commune/%s' % (common,)
         merge()
