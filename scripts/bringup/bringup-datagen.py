@@ -318,12 +318,12 @@ def make_calendar(raw, do_rubric_name):
             append[key] = entries
         else:
             # This is very ad hoc: Sundays and ferias are easy, but we also
-            # want to catch the temporal octaves.  XXX: What about the octave
-            # of the Epiphany, and any sanctoral offices that happen to fall
-            # within it?
+            # want to catch the temporal octaves.
             temporal = [x for x in entries
                         if x['qualitas'] in ['dominica', 'feria'] or
-                           re.match(r'Pasc[0567]', calpoint)]
+                           re.match(r'Pasc[0567]', calpoint) or
+                           (re.match(r'01-(0[7-9]|1[0-2])', calpoint) and
+                            x['qualitas'] == 'infra-octavam')]
             others = [x for x in entries if x not in temporal]
             if temporal:
                 create[key] = temporal
