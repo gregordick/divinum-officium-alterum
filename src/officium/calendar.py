@@ -728,7 +728,7 @@ class CalendarResolver(ABC):
             for (vc, ofc) in zip(vespers_classeses, vespers_offices)
         ]
 
-        seasons = [season]
+        seasons = [season] if season is not None else []
         if 5 <= date.month <= 7 or (reading_day is not None and
                                     reading_day[1] <= 9):
             # Invent a season to allow for the summer Matins and Lauds parts.
