@@ -400,12 +400,16 @@ def make_out_key(key, do_basename):
         out_key = 'ad-ii-vesperas/capitulum'
     elif key == 'Capitulum Vespera':
         out_key = 'ad-vesperas/capitulum'
+    elif key == 'Capitulum Laudes':
+        out_key = 'ad-laudes/capitulum'
     elif key == 'Hymnus Vespera 1':
         out_key = 'ad-i-vesperas/hymnus'
     elif key == 'Hymnus Vespera 3':
         out_key = 'ad-ii-vesperas/hymnus'
     elif key == 'Hymnus Vespera':
         out_key = 'ad-vesperas/hymnus'
+    elif key == 'Hymnus Laudes':
+        out_key = 'ad-laudes/hymnus'
     elif key == 'Versum 1':
         out_key = 'ad-i-vesperas/versiculum'
     elif key == 'Versum 3':
